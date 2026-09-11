@@ -1,1 +1,277 @@
-.back{color:var(--muted);text-decoration:none;font-size:.9rem}.hero{display:grid;grid-template-columns:minmax(230px,320px) 1fr;gap:clamp(2rem,6vw,6rem);align-items:center;padding:2.5rem 0 5rem}.poster{aspect-ratio:2/3;border-radius:20px;overflow:hidden;background:var(--surface);position:relative;box-shadow:0 25px 70px rgba(0,0,0,.4)}.poster img{width:100%;height:100%;object-fit:cover}.seen-mark{position:absolute;right:.8rem;bottom:.8rem;background:var(--primary);color:white;font-weight:900;font-size:.65rem;line-height:.85;padding:.6rem;border-radius:8px;text-align:center}.meta{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.08em}.meta span{color:#ffd36d;margin-left:1rem}.info h1{font-size:clamp(3rem,7vw,6.5rem);line-height:.92;letter-spacing:-.065em;margin:.7rem 0 1rem}.genres{display:flex;gap:.5rem;flex-wrap:wrap}.genres span{border:1px solid var(--border);border-radius:999px;padding:.4rem .65rem;color:var(--muted);font-size:.75rem}.info>p{color:var(--muted);line-height:1.75;max-width:760px;font-size:1.05rem}.save-row{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin-top:1.5rem}.save-row select,.save-row button{padding:.8rem 1rem;border-radius:11px;font:inherit}.save-row select{background:var(--surface);color:white;border:1px solid var(--border)}.save-row button{background:var(--primary);color:white;border:0;font-weight:800;cursor:pointer}.current{color:#72ddc3;font-weight:700}.episodes{border-top:1px solid var(--border);padding-top:3rem}.section-title{display:flex;justify-content:space-between;gap:2rem;align-items:end}.eyebrow{color:var(--accent);text-transform:uppercase;letter-spacing:.14em;font-size:.75rem;font-weight:800;margin:0}.section-title h2{font-size:2.4rem;margin:.3rem 0}.season-tabs{display:flex;gap:.45rem;overflow-x:auto;max-width:65%}.season-tabs button{border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:999px;padding:.55rem .8rem;white-space:nowrap;cursor:pointer}.season-tabs button.active{background:white;color:#12131f}.episode-list{display:grid;gap:.8rem;margin-top:1.5rem}.episode-list article{display:grid;grid-template-columns:180px 1fr auto;gap:1.2rem;align-items:center;padding:1rem;border-radius:14px;background:var(--surface);border:1px solid var(--border)}.episode-image{aspect-ratio:16/9;border-radius:9px;overflow:hidden;background:var(--surface-soft);display:grid;place-items:center;color:var(--primary)}.episode-image img{width:100%;height:100%;object-fit:cover}.episode-code{color:var(--accent);font-size:.72rem;font-weight:800}.episode-list h3{margin:.25rem 0;font-size:1.08rem}.episode-list p{color:var(--muted);margin:.3rem 0;font-size:.88rem;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.runtime{color:var(--muted);font-size:.8rem}.loading,.not-found{text-align:center;padding:8rem 1rem;color:var(--muted)}@media(max-width:780px){.hero{grid-template-columns:1fr}.poster{width:min(280px,80vw);margin:auto}.section-title{align-items:flex-start;flex-direction:column}.season-tabs{max-width:100%}.episode-list article{grid-template-columns:100px 1fr}.runtime{display:none}}@media(max-width:500px){.episode-list article{grid-template-columns:1fr}.episode-image{display:none}}
+.back {
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(230px, 320px) 1fr;
+  gap: clamp(2rem, 6vw, 6rem);
+  align-items: center;
+  padding: 2.5rem 0 5rem;
+}
+
+.poster {
+  aspect-ratio: 2/3;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--surface);
+  position: relative;
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+}
+
+.poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.seen-mark {
+  position: absolute;
+  right: 0.8rem;
+  bottom: 0.8rem;
+  background: var(--primary);
+  color: white;
+  font-weight: 900;
+  font-size: 0.65rem;
+  line-height: 0.85;
+  padding: 0.6rem;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.meta span {
+  color: #ffd36d;
+  margin-left: 1rem;
+}
+
+.info h1 {
+  font-size: clamp(3rem, 7vw, 6.5rem);
+  line-height: 0.92;
+  letter-spacing: -0.065em;
+  margin: 0.7rem 0 1rem;
+}
+
+.genres {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.genres span {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.4rem 0.65rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.info > p {
+  color: var(--muted);
+  line-height: 1.75;
+  max-width: 760px;
+  font-size: 1.05rem;
+}
+
+.save-row {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 1.5rem;
+}
+
+.save-row select,
+.save-row button {
+  padding: 0.8rem 1rem;
+  border-radius: 11px;
+  font: inherit;
+}
+
+.save-row select {
+  background: var(--surface);
+  color: white;
+  border: 1px solid var(--border);
+}
+
+.save-row button {
+  background: var(--primary);
+  color: white;
+  border: 0;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.current {
+  color: #72ddc3;
+  font-weight: 700;
+}
+
+.episodes {
+  border-top: 1px solid var(--border);
+  padding-top: 3rem;
+}
+
+.section-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  align-items: end;
+}
+
+.eyebrow {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.section-title h2 {
+  font-size: 2.4rem;
+  margin: 0.3rem 0;
+}
+
+.season-tabs {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  max-width: 65%;
+}
+
+.season-tabs button {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 0.55rem 0.8rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.season-tabs button.active {
+  background: white;
+  color: #12131f;
+}
+
+.episode-list {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.5rem;
+}
+
+.episode-list article {
+  display: grid;
+  grid-template-columns: 180px 1fr auto;
+  gap: 1.2rem;
+  align-items: center;
+  padding: 1rem;
+  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.episode-image {
+  aspect-ratio: 16/9;
+  border-radius: 9px;
+  overflow: hidden;
+  background: var(--surface-soft);
+  display: grid;
+  place-items: center;
+  color: var(--primary);
+}
+
+.episode-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.episode-code {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.episode-list h3 {
+  margin: 0.25rem 0;
+  font-size: 1.08rem;
+}
+
+.episode-list p {
+  color: var(--muted);
+  margin: 0.3rem 0;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.runtime {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.loading,
+.not-found {
+  text-align: center;
+  padding: 8rem 1rem;
+  color: var(--muted);
+}
+
+@media (max-width: 780px) {
+  .hero {
+    grid-template-columns: 1fr;
+  }
+  .poster {
+    width: min(280px, 80vw);
+    margin: auto;
+  }
+  .section-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .season-tabs {
+    max-width: 100%;
+  }
+  .episode-list article {
+    grid-template-columns: 100px 1fr;
+  }
+  .runtime {
+    display: none;
+  }
+}
+
+@media (max-width: 500px) {
+  .episode-list article {
+    grid-template-columns: 1fr;
+  }
+  .episode-image {
+    display: none;
+  }
+}
+
+.save-row select:invalid {
+  color: var(--muted);
+}
+
+.save-row select option {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.save-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

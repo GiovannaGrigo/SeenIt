@@ -1,5 +1,63 @@
-<section class="explore-heading"><p class="eyebrow">Catálogo de séries</p><h1>O que você quer assistir?</h1><form (ngSubmit)="search()"><input [formControl]="query" placeholder="Busque por uma série..." aria-label="Nome da série"><button type="submit">Buscar</button></form>@if(query.touched && query.invalid){<p class="hint">Digite ao menos 2 caracteres.</p>}</section>
-@if (loading()) { <p class="feedback">Buscando séries...</p> }
-@else if (searched() && !results().length) { <p class="feedback">Nenhuma série encontrada. Tente outro nome.</p> }
-@else if (!searched()) { <section class="discovery"><span>⌕</span><h2>Encontre sua próxima série</h2><p>Pesquise pelo título e escolha onde ela entra na sua lista.</p></section> }
-@else { <div class="results">@for(item of results();track item.id){<article><a class="thumb" [routerLink]="['/serie',item.id]">@if(item.posterUrl){<img [src]="item.posterUrl" [alt]="'Pôster de '+item.name">}@else{<span>Sem pôster</span>}</a><div class="result-info"><div><div class="meta">{{ item.premiered?.slice(0,4) || 'Ano indisponível' }} @if(item.rating){<span>★ {{ item.rating }}</span>}</div><a [routerLink]="['/serie',item.id]"><h2>{{ item.name }}</h2></a><p>{{ item.summary || 'Descrição ainda não disponível.' }}</p></div><div class="actions">@if(saved().get(item.id);as status){<span class="saved">✓ {{ label(status) }}</span>}@else{<button (click)="add(item,SeriesStatus.InList)">＋ Lista</button><button (click)="add(item,SeriesStatus.Watching)">▶ Assistindo</button><button (click)="add(item,SeriesStatus.Finished)">✓ Finalizada</button>}</div></div></article>}</div>}
+<section class="explore-heading">
+  <p class="eyebrow">Catálogo de séries</p>
+  <h1>O que você quer assistir?</h1>
+  <form [formGroup]="searchForm" (ngSubmit)="search()">
+    <input
+      [formControl]="query"
+      placeholder="Busque por uma série..."
+      aria-label="Nome da série"
+    /><button type="submit">Buscar</button>
+  </form>
+  @if (query.touched && query.invalid) {
+    <p class="hint">Digite ao menos 2 caracteres.</p>
+  }
+</section>
+
+@if (loading()) {
+  <p class="feedback">Buscando séries...</p>
+} @else if (searched() && !results().length) {
+  <p class="feedback">Nenhuma série encontrada. Tente outro nome.</p>
+} @else if (!searched()) {
+  <section class="discovery">
+    <span>⌕</span>
+    <h2>Encontre sua próxima série</h2>
+    <p>Pesquise pelo título e escolha onde ela entra na sua lista.</p>
+  </section>
+} @else {
+  <div class="results">
+    @for (item of results(); track item.id) {
+      <article>
+        <a class="thumb" [routerLink]="['/serie', item.id]">
+          @if (item.posterUrl) {
+            <img [src]="item.posterUrl" [alt]="'Pôster de ' + item.name" />
+          } @else {
+            <span>Sem pôster</span>
+          }
+        </a>
+        <div class="result-info">
+          <div>
+            <div class="meta">
+              {{ item.premiered?.slice(0, 4) || "Ano indisponível" }}
+              @if (item.rating) {
+                <span>★ {{ item.rating }}</span>
+              }
+            </div>
+            <a [routerLink]="['/serie', item.id]"
+              ><h2>{{ item.name }}</h2></a
+            >
+            <p>{{ item.summary || "Descrição ainda não disponível." }}</p>
+          </div>
+          <div class="actions">
+            @if (saved().has(item.id)) {
+              <span class="saved"> ✓ Adicionada à lista </span>
+            } @else {
+              <button type="button" (click)="add(item)">
+                ＋ Adicionar
+              </button>
+            }
+          </div>
+        </div>
+      </article>
+    }
+  </div>
+}
