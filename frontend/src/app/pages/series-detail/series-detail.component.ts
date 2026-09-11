@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, signal } from "@angular/core";
+import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { forkJoin } from "rxjs";
 import { SeriesService } from "../../core/series.service";
@@ -8,14 +8,19 @@ import {
   SeriesStatus,
 } from "../../models/series.models";
 import { FormControl, ReactiveFormsModule } from "@angular/forms";
+import { EpisodioAssistidoResponse } from "src/app/models/episodio-assistido.model";
+import { EpisodioAssistidoService } from "src/app/core/episodio-assistido.service";
+import { EpisodioModalComponent } from "src/app/shared/episodio-modal/episodio-modal.component";
 
 @Component({
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule],
+  imports: [RouterLink, ReactiveFormsModule, EpisodioModalComponent],
   templateUrl: "./series-detail.component.html",
   styleUrl: "./series-detail.component.scss",
 })
 export class SeriesDetailComponent implements OnInit {
+  private readonly episodioAssistidoService = inject(EpisodioAssistidoService);
+
   readonly SeriesStatus = SeriesStatus;
   readonly series = signal<SeriesDetails | null>(null);
   readonly episodes = signal<Episode[]>([]);
@@ -28,6 +33,10 @@ export class SeriesDetailComponent implements OnInit {
   readonly seasonEpisodes = computed(() =>
     this.episodes().filter((x) => x.season === this.selectedSeason()),
   );
+  readonly episodioSelecionado = signal<Episode | null>(null);
+  readonly episodiosAssistidos = signal<Map<number, EpisodioAssistidoResponse>>(
+    new Map(),
+  );
   readonly statusControl = new FormControl<SeriesStatus | null>(null);
 
   constructor(
@@ -37,6 +46,7 @@ export class SeriesDetailComponent implements OnInit {
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get("id"));
+
     forkJoin({
       series: this.service.getDetails(id),
       episodes: this.service.getEpisodes(id),
@@ -46,12 +56,22 @@ export class SeriesDetailComponent implements OnInit {
         this.series.set(result.series);
         this.episodes.set(result.episodes);
         this.selectedSeason.set(this.seasons()[0] ?? 1);
+
         this.savedStatus.set(
-          result.mine.find((x) => x.externalSeriesId === id)?.status ?? null,
+          result.mine.find((item) => item.externalSeriesId === id)?.status ??
+            null,
         );
+
+        this.carregarEpisodiosAssistidos(id);
+
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+
+      error: (error) => {
+        console.error("Erro ao carregar detalhes da série:", error);
+
+        this.loading.set(false);
+      },
     });
   }
 
@@ -83,5 +103,46 @@ export class SeriesDetailComponent implements OnInit {
 
   episodeCode(ep: Episode): string {
     return `T${String(ep.season).padStart(2, "0")}E${String(ep.number).padStart(2, "0")}`;
+  }
+
+  abrirModal(episodio: Episode): void {
+    this.episodioSelecionado.set(episodio);
+  }
+
+  fecharModal(): void {
+    this.episodioSelecionado.set(null);
+  }
+
+  foiAssistido(episodeId: number): boolean {
+    return this.episodiosAssistidos().has(episodeId);
+  }
+
+  obterRegistro(episodeId: number): EpisodioAssistidoResponse | null {
+    return this.episodiosAssistidos().get(episodeId) ?? null;
+  }
+
+  aoSalvarEpisodio(registro: EpisodioAssistidoResponse): void {
+    this.episodiosAssistidos.update((atuais) => {
+      const novos = new Map(atuais);
+
+      novos.set(registro.externalEpisodeId, registro);
+
+      return novos;
+    });
+  }
+
+  private carregarEpisodiosAssistidos(seriesId: number): void {
+    this.episodioAssistidoService.obterAssistidosPorSerie(seriesId).subscribe({
+      next: (registros) => {
+        this.episodiosAssistidos.set(
+          new Map(
+            registros.map((registro) => [registro.externalEpisodeId, registro]),
+          ),
+        );
+      },
+      error: (error) => {
+        console.error("Erro ao carregar episódios assistidos:", error);
+      },
+    });
   }
 }

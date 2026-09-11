@@ -7,6 +7,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<UserSeries> UserSeries => Set<UserSeries>();
+    public DbSet<EpisodioAssistido> EpisodiosAssistidos => Set<EpisodioAssistido>();
+    public DbSet<EpisodioAssistidoSentimento> EpisodiosAssistidosSentimentos => Set<EpisodioAssistidoSentimento>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,6 +30,46 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.HasOne(x => x.User)
                 .WithMany(x => x.Series)
                 .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EpisodioAssistido>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+
+            entity.Property(x => x.NomeEpisodio)
+                .HasMaxLength(240)
+                .IsRequired();
+
+            entity.Property(x => x.PersonagemFavoritoNome)
+                .HasMaxLength(200)
+                .IsRequired();
+
+            entity.HasIndex(x => new
+            {
+                x.UserId,
+                x.ExternalEpisodeId
+            }).IsUnique();
+
+            entity.HasOne(x => x.User)
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<EpisodioAssistidoSentimento>(entity =>
+        {
+            entity.HasKey(x => new
+            {
+                x.EpisodioAssistidoId,
+                x.Sentimento
+            });
+
+            entity
+                .HasOne(x => x.EpisodioAssistido)
+                .WithMany(x => x.Sentimentos)
+                .HasForeignKey(
+                    x => x.EpisodioAssistidoId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }

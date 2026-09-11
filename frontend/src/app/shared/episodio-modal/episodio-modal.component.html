@@ -1,0 +1,204 @@
+<div class="modal-backdrop" (click)="fechar.emit()">
+  <section
+    class="modal"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'Avaliar episódio ' + episodio().name"
+    (click)="$event.stopPropagation()"
+  >
+    <button
+      type="button"
+      class="close"
+      aria-label="Fechar modal"
+      title="Fechar"
+      (click)="fechar.emit()"
+    >
+      <i class="pi pi-times" aria-hidden="true"></i>
+    </button>
+
+    <div class="modal-content">
+      <header class="modal-header">
+        <span class="episode-code">
+          Temporada {{ episodio().season }} · Episódio {{ episodio().number }}
+        </span>
+
+        <h2>{{ episodio().name }}</h2>
+      </header>
+
+      @if (carregando()) {
+        <div class="loading-container">
+          <p>Carregando...</p>
+        </div>
+      } @else {
+        <section class="emotion-section">
+          <span class="section-eyebrow"> Sua experiência </span>
+
+          <h3 class="emotion-question">Como você se sentiu?</h3>
+
+          <div class="feelings">
+            @for (sentimento of sentimentos; track sentimento.valor) {
+              <button
+                type="button"
+                class="feeling-button"
+                [class.selected]="sentimentoSelecionado(sentimento.valor)"
+                [attr.aria-pressed]="sentimentoSelecionado(sentimento.valor)"
+                (click)="alternarSentimento(sentimento.valor)"
+              >
+                <span class="feeling-emoji">
+                  {{ sentimento.emoji }}
+                </span>
+
+                <span class="feeling-label">
+                  {{ sentimento.descricao }}
+                </span>
+
+                @if (sentimentoSelecionado(sentimento.valor)) {
+                  <span class="selected-check"> ✓ </span>
+                }
+              </button>
+            }
+          </div>
+        </section>
+
+        <section class="character-section">
+          <div class="section-heading">
+            <span class="section-eyebrow"> Seu favorito </span>
+
+            <h3>Qual foi seu personagem favorito?</h3>
+          </div>
+
+          <div class="characters-wrapper">
+            <div class="characters">
+              @for (
+                personagem of personagens();
+                track personagem.externalCharacterId
+              ) {
+                <button
+                  type="button"
+                  class="character"
+                  [class.selected]="
+                    personagemSelecionado(personagem.externalCharacterId)
+                  "
+                  [attr.aria-pressed]="
+                    personagemSelecionado(personagem.externalCharacterId)
+                  "
+                  (click)="selecionarPersonagem(personagem.externalCharacterId)"
+                >
+                  <div class="character-photo">
+                    @if (personagem.imagemUrl) {
+                      <img
+                        [src]="personagem.imagemUrl"
+                        [alt]="personagem.nome"
+                      />
+                    } @else {
+                      <span class="character-placeholder">
+                        {{ personagem.nome.charAt(0) }}
+                      </span>
+                    }
+
+                    @if (
+                      personagemSelecionado(personagem.externalCharacterId)
+                    ) {
+                      <span class="character-check"> ✓ </span>
+                    }
+                  </div>
+
+                  <div class="character-info">
+                    <strong>
+                      {{ personagem.nome }}
+                    </strong>
+
+                    @if (personagem.atorNome) {
+                      <small>
+                        {{ personagem.atorNome }}
+                      </small>
+                    }
+                  </div>
+                </button>
+              } @empty {
+                <div class="empty-state">
+                  <p>Nenhum personagem encontrado.</p>
+                </div>
+              }
+            </div>
+          </div>
+        </section>
+
+        @if (form.controls.externalCharacterId.value) {
+          <section class="votes-section">
+            <div class="section-heading">
+              <span class="section-eyebrow"> Resultado da comunidade </span>
+
+              <h3>Favoritos deste episódio</h3>
+            </div>
+
+            <div class="votes">
+              @for (voto of votacao(); track voto.externalCharacterId) {
+                <div class="vote">
+                  <div class="vote-header">
+                    <span>
+                      {{ voto.personagemNome }}
+                    </span>
+
+                    <strong> {{ voto.porcentagem }}% </strong>
+                  </div>
+
+                  <div class="vote-track">
+                    <div
+                      class="vote-progress"
+                      [style.width.%]="voto.porcentagem"
+                    ></div>
+                  </div>
+
+                  <small>
+                    {{ voto.totalVotos }}
+                    {{ voto.totalVotos === 1 ? "voto" : "votos" }}
+                  </small>
+                </div>
+              } @empty {
+                <div class="empty-state">
+                  <p>Este episódio ainda não possui votos.</p>
+
+                  <span> Seja a primeira pessoa a votar. </span>
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        @if (mensagemErro()) {
+          <p class="feedback-message error" role="alert">
+            {{ mensagemErro() }}
+          </p>
+        }
+
+        @if (salvoComSucesso()) {
+          <p class="feedback-message success" role="status">
+            ✓ Episódio marcado como assistido!
+          </p>
+        }
+
+        <footer class="actions">
+          <button type="button" class="secondary" (click)="fechar.emit()">
+            Fechar
+          </button>
+
+          <button
+            type="button"
+            class="primary"
+            [disabled]="form.invalid || salvando()"
+            (click)="salvar()"
+          >
+            @if (salvando()) {
+              Salvando...
+            } @else if (registroAtual()) {
+              Atualizar avaliação
+            } @else {
+              ✓ Marcar como assistido
+            }
+          </button>
+        </footer>
+      }
+    </div>
+  </section>
+</div>

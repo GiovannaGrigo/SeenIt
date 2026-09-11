@@ -144,23 +144,64 @@
 .season-tabs {
   display: flex;
   gap: 0.45rem;
-  overflow-x: auto;
   max-width: 65%;
+  padding: 0.15rem 0 0.65rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-inline: contain;
+  scrollbar-color: #625a8d transparent;
+  scrollbar-width: thin;
 }
 
-.season-tabs button {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--muted);
+.season-tabs > button {
+  flex: 0 0 auto;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #303047;
   border-radius: 999px;
-  padding: 0.55rem 0.8rem;
+  background: #161622;
+  color: #aaa7bf;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
   white-space: nowrap;
   cursor: pointer;
+  scroll-snap-align: start;
+  transition:
+    color 150ms ease,
+    border-color 150ms ease,
+    background 150ms ease,
+    box-shadow 150ms ease,
+    transform 150ms ease;
 }
 
-.season-tabs button.active {
-  background: white;
-  color: #12131f;
+.season-tabs > button:not(.active):hover {
+  border-color: #625a8d;
+  background: #1d1d2c;
+  color: #ffffff;
+}
+
+.season-tabs > button.active,
+.season-tabs > button[aria-selected="true"] {
+  border-color: #786aff;
+  background: linear-gradient(135deg, #786aff, #5d4de8);
+  box-shadow:
+    0 6px 18px rgb(108 92 255 / 28%),
+    inset 0 0 0 1px rgb(255 255 255 / 10%);
+
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.season-tabs > button.active:hover {
+  border-color: #8d82ff;
+  background: linear-gradient(135deg, #897dff, #6858ed);
+}
+
+.season-tabs > button:focus-visible {
+  outline: 3px solid rgb(120 106 255 / 28%);
+  outline-offset: 2px;
 }
 
 .episode-list {
@@ -243,6 +284,7 @@
     flex-direction: column;
   }
   .season-tabs {
+    width: 100%;
     max-width: 100%;
   }
   .episode-list article {
@@ -274,4 +316,32 @@
 .save-row button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.episode-card {
+  cursor: pointer;
+}
+
+.episode-content {
+  min-width: 0;
+}
+
+.episode-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+}
+
+.watched-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  border: 1px solid rgb(85 230 188 / 35%);
+  border-radius: 999px;
+  background: rgb(85 230 188 / 12%);
+  color: #55e6bc;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
 }

@@ -47,7 +47,7 @@
         >
           Atualizar status
         </button>
-        @if (savedStatus()) {
+        @if (savedStatus() !== null) {
           <span class="current">✓ {{ label(savedStatus()) }}</span>
         }
       </div>
@@ -59,11 +59,13 @@
         <p class="eyebrow">Guia de episódios</p>
         <h2>Episódios</h2>
       </div>
-      <div class="season-tabs" role="tablist">
+      <div class="season-tabs" role="tablist" aria-label="Temporadas">
         @for (season of seasons(); track season) {
           <button
+            type="button"
             role="tab"
             [class.active]="season === selectedSeason()"
+            [attr.aria-selected]="season === selectedSeason()"
             (click)="selectedSeason.set(season)"
           >
             Temporada {{ season }}
@@ -73,7 +75,13 @@
     </div>
     <div class="episode-list">
       @for (ep of seasonEpisodes(); track ep.id) {
-        <article>
+        <article
+          class="episode-card"
+          role="button"
+          tabindex="0"
+          (click)="abrirModal(ep)"
+          (keydown.enter)="abrirModal(ep)"
+        >
           <div class="episode-image">
             @if (ep.imageUrl) {
               <img [src]="ep.imageUrl" [alt]="'Cena do episódio ' + ep.name" />
@@ -81,16 +89,38 @@
               <span>▶</span>
             }
           </div>
-          <div>
-            <span class="episode-code">{{ episodeCode(ep) }}</span>
+          <div class="episode-content">
+            <div class="episode-header">
+              <span class="episode-code">
+                {{ episodeCode(ep) }}
+              </span>
+
+              @if (foiAssistido(ep.id)) {
+                <span class="watched-badge"> ✓ Assistido </span>
+              }
+            </div>
+
             <h3>{{ ep.name }}</h3>
-            <p>{{ ep.summary || "Descrição ainda não disponível." }}</p>
+
+            <p>
+              {{ ep.summary || "Descrição ainda não disponível." }}
+            </p>
           </div>
           <div class="runtime">{{ ep.runtime ? ep.runtime + " min" : "" }}</div>
         </article>
       }
     </div>
   </section>
+
+  @if (episodioSelecionado(); as episodio) {
+    <app-episodio-modal
+      [episodio]="episodio"
+      [seriesId]="series()!.id"
+      [registroAtual]="obterRegistro(episodio.id)"
+      (fechar)="fecharModal()"
+      (salvo)="aoSalvarEpisodio($event)"
+    />
+  }
 } @else {
   <section class="not-found">
     <h1>Série não encontrada</h1>

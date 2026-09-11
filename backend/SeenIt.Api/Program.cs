@@ -10,6 +10,8 @@ using SeenIt.Api.Domain;
 using SeenIt.Api.DTOs;
 using SeenIt.Api.External;
 using SeenIt.Api.Services;
+using System.Text.Json.Serialization;
+using SeenIt.Api.Interfaces.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,6 +51,27 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(options => options.AddPolicy("Frontend", policy =>
     policy.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod()));
 
+builder.Services
+.AddControllers()
+.AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(
+        new JsonStringEnumConverter());
+});
+
+builder.Services.AddScoped<
+    IEpisodioAssistidoService,
+    EpisodioAssistidoService>();
+
+builder.Services.AddHttpClient<
+    ITvMazeService,
+    TvMazeService>(client =>
+    {
+        client.BaseAddress = new Uri("https://api.tvmaze.com/");
+
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("SeenIt/1.0");
+    });
+
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
@@ -56,12 +79,7 @@ app.UseHttpsRedirection();
 app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
-
-await using (var scope = app.Services.CreateAsyncScope())
-{
-    var database = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await database.Database.EnsureCreatedAsync();
-}
+app.MapControllers();
 
 var auth = app.MapGroup("/api/auth").WithTags("Autenticação");
 
