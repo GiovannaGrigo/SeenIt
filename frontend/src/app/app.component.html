@@ -1,0 +1,16 @@
+@if (auth.isAuthenticated()) {
+  <header class="app-header">
+    <a class="brand" routerLink="/minha-lista" aria-label="SeenIt - início">
+      <span class="brand-mark">S</span><span>SeenIt</span>
+    </a>
+    <nav aria-label="Navegação principal">
+      <a routerLink="/minha-lista" routerLinkActive="active">Minha lista</a>
+      <a routerLink="/explorar" routerLinkActive="active">Explorar</a>
+    </nav>
+    <div class="account">
+      <span>{{ auth.user()?.name }}</span>
+      <button class="icon-button" type="button" (click)="logout()" aria-label="Sair da conta" title="Sair">↗</button>
+    </div>
+  </header>
+}
+<main [class.auth-main]="!auth.isAuthenticated()"><router-outlet /></main>

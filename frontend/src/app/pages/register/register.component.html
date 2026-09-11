@@ -1,0 +1,20 @@
+<section class="auth-page">
+  <div class="auth-copy">
+    <a class="auth-brand" routerLink="/"><span>S</span> SeenIt</a>
+    <p class="eyebrow">Comece sua coleção</p>
+    <h1>Guarde cada série no capítulo certo.</h1>
+    <p class="lead">Da lista de desejos ao último episódio, seu histórico fica organizado do seu jeito.</p>
+    <div class="quote-card"><span class="play">✓</span><p>Para assistir · Assistindo · Finalizadas</p></div>
+  </div>
+  <div class="auth-panel">
+    <form (ngSubmit)="submit()" [formGroup]="form">
+      <div><p class="eyebrow">Sua conta SeenIt</p><h2>Crie seu perfil</h2></div>
+      <label>Nome<input formControlName="name" placeholder="Como quer ser chamado?" autocomplete="name"></label>
+      <label>E-mail<input type="email" formControlName="email" placeholder="voce@email.com" autocomplete="email"></label>
+      <label>Senha<input type="password" formControlName="password" placeholder="Mínimo de 8 caracteres" autocomplete="new-password"></label>
+      @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+      <button class="primary-button" type="submit" [disabled]="loading()">{{ loading() ? 'Criando...' : 'Criar conta' }}</button>
+      <p class="auth-link">Já tem uma conta? <a routerLink="/login">Entrar</a></p>
+    </form>
+  </div>
+</section>

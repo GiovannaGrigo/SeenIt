@@ -1,0 +1,19 @@
+<section class="auth-page">
+  <div class="auth-copy">
+    <a class="auth-brand" routerLink="/"><span>S</span> SeenIt</a>
+    <p class="eyebrow">Sua próxima maratona começa aqui</p>
+    <h1>As histórias que você viu. E as que ainda vai ver.</h1>
+    <p class="lead">Organize suas séries, acompanhe episódios e nunca mais se pergunte onde parou.</p>
+    <div class="quote-card"><span class="play">▶</span><p>Um lugar só para tudo o que você está assistindo.</p></div>
+  </div>
+  <div class="auth-panel">
+    <form (ngSubmit)="submit()" [formGroup]="form">
+      <div><p class="eyebrow">Bem-vindo de volta</p><h2>Entre na sua conta</h2></div>
+      <label>E-mail<input type="email" formControlName="email" placeholder="voce@email.com" autocomplete="email"></label>
+      <label>Senha<input type="password" formControlName="password" placeholder="Sua senha" autocomplete="current-password"></label>
+      @if (error()) { <p class="form-error" role="alert">{{ error() }}</p> }
+      <button class="primary-button" type="submit" [disabled]="loading()">{{ loading() ? 'Entrando...' : 'Entrar' }}</button>
+      <p class="auth-link">Ainda não tem uma conta? <a routerLink="/cadastro">Criar conta</a></p>
+    </form>
+  </div>
+</section>
