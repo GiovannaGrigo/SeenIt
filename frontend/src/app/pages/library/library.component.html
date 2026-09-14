@@ -1,17 +1,12 @@
 <section class="page-heading">
   <div>
     <p class="eyebrow">Sua coleção</p>
-
     <h1>Minha lista</h1>
-
-    <p>
-      {{ counts().all }}
-      {{ counts().all === 1 ? "série guardada" : "séries guardadas" }}
-      no SeenIt.
-    </p>
   </div>
 
-  <a class="primary-link" routerLink="/explorar"> ＋ Encontrar séries </a>
+  <a class="primary-link" routerLink="/explorar">
+    <i class="pi pi-plus" aria-hidden="true"></i> Encontrar séries
+  </a>
 </section>
 
 <div class="filters" role="group" aria-label="Filtrar séries">
@@ -60,13 +55,15 @@
   </div>
 } @else if (!visibleItems().length) {
   <section class="empty-state">
-    <span>◇</span>
+    <i class="pi pi-inbox" aria-hidden="true"></i>
 
     <h2>Nenhuma série por aqui</h2>
 
     <p>Explore o catálogo e adicione a primeira série a esta categoria.</p>
 
-    <a class="primary-link" routerLink="/explorar"> Explorar catálogo </a>
+    <a class="primary-link" routerLink="/explorar">
+      <i class="pi pi-search" aria-hidden="true"></i> Explorar catálogo
+    </a>
   </section>
 } @else {
   <div class="series-grid">

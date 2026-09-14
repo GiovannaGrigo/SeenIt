@@ -1,7 +1,7 @@
 @if (loading()) {
   <p class="loading">Carregando detalhes...</p>
 } @else if (series(); as item) {
-  <a class="back" routerLink="/explorar">← Voltar para explorar</a>
+  <a class="back" routerLink="/explorar"><i class="pi pi-arrow-left" aria-hidden="true"></i> Voltar para explorar</a>
   <section class="hero">
     <div class="poster">
       @if (item.originalPosterUrl || item.posterUrl) {
@@ -17,7 +17,7 @@
         {{ item.premiered?.slice(0, 4) || "Ano desconhecido" }} ·
         {{ item.status || "Status desconhecido" }}
         @if (item.rating) {
-          <span>★ {{ item.rating }}</span>
+          <span><i class="pi pi-star-fill" aria-hidden="true"></i> {{ item.rating }}</span>
         }
       </div>
       <h1>{{ item.name }}</h1>
@@ -48,7 +48,7 @@
           Atualizar status
         </button>
         @if (savedStatus() !== null) {
-          <span class="current">✓ {{ label(savedStatus()) }}</span>
+          <span class="current"><i class="pi pi-check" aria-hidden="true"></i> {{ label(savedStatus()) }}</span>
         }
       </div>
     </div>
@@ -86,7 +86,7 @@
             @if (ep.imageUrl) {
               <img [src]="ep.imageUrl" [alt]="'Cena do episódio ' + ep.name" />
             } @else {
-              <span>▶</span>
+              <i class="pi pi-play" aria-hidden="true"></i>
             }
           </div>
           <div class="episode-content">
@@ -96,7 +96,7 @@
               </span>
 
               @if (foiAssistido(ep.id)) {
-                <span class="watched-badge"> ✓ Assistido </span>
+                <span class="watched-badge"><i class="pi pi-check" aria-hidden="true"></i> Assistido</span>
               }
             </div>
 

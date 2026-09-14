@@ -64,7 +64,7 @@
   padding: 5rem 1rem;
 }
 
-.discovery span {
+.discovery .pi {
   font-size: 4rem;
   color: var(--primary);
 }
@@ -150,6 +150,12 @@
 .meta span {
   color: #ffd36d;
   margin-left: 0.8rem;
+}
+
+.meta .pi,
+.saved .pi,
+.actions button .pi {
+  margin-right: 0.25rem;
 }
 
 .actions {

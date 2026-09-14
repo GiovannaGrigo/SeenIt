@@ -19,7 +19,7 @@
   <p class="feedback">Nenhuma série encontrada. Tente outro nome.</p>
 } @else if (!searched()) {
   <section class="discovery">
-    <span>⌕</span>
+    <i class="pi pi-search" aria-hidden="true"></i>
     <h2>Encontre sua próxima série</h2>
     <p>Pesquise pelo título e escolha onde ela entra na sua lista.</p>
   </section>
@@ -39,7 +39,7 @@
             <div class="meta">
               {{ item.premiered?.slice(0, 4) || "Ano indisponível" }}
               @if (item.rating) {
-                <span>★ {{ item.rating }}</span>
+                <span><i class="pi pi-star-fill" aria-hidden="true"></i> {{ item.rating }}</span>
               }
             </div>
             <a [routerLink]="['/serie', item.id]"
@@ -49,10 +49,10 @@
           </div>
           <div class="actions">
             @if (saved().has(item.id)) {
-              <span class="saved"> ✓ Adicionada à lista </span>
+              <span class="saved"><i class="pi pi-check" aria-hidden="true"></i> Adicionada à lista</span>
             } @else {
               <button type="button" (click)="add(item)">
-                ＋ Adicionar
+                <i class="pi pi-plus" aria-hidden="true"></i> Adicionar
               </button>
             }
           </div>

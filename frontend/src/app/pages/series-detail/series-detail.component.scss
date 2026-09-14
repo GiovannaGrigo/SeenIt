@@ -4,6 +4,17 @@
   font-size: 0.9rem;
 }
 
+.back .pi,
+.current .pi,
+.watched-badge .pi,
+.episode-image .pi {
+  margin-right: 0.3rem;
+}
+
+.episode-image .pi {
+  font-size: 1.5rem;
+}
+
 .hero {
   display: grid;
   grid-template-columns: minmax(230px, 320px) 1fr;

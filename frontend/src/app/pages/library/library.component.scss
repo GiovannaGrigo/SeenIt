@@ -39,6 +39,10 @@
   white-space: nowrap;
 }
 
+.primary-link .pi {
+  margin-right: 0.4rem;
+}
+
 .filters {
   display: flex;
   gap: 0.5rem;
@@ -159,7 +163,7 @@
   padding: 2rem;
 }
 
-.empty-state > span {
+.empty-state > .pi {
   font-size: 3rem;
   color: var(--primary);
 }
