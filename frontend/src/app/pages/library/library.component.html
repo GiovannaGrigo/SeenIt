@@ -1,33 +1,181 @@
 <section class="page-heading">
-  <div><p class="eyebrow">Sua coleção</p><h1>Minha lista</h1><p>{{ counts().all }} séries guardadas no SeenIt.</p></div>
-  <a class="primary-link" routerLink="/explorar">＋ Encontrar séries</a>
+  <div>
+    <p class="eyebrow">Sua coleção</p>
+
+    <h1>Minha lista</h1>
+
+    <p>
+      {{ counts().all }}
+      {{ counts().all === 1 ? "série guardada" : "séries guardadas" }}
+      no SeenIt.
+    </p>
+  </div>
+
+  <a class="primary-link" routerLink="/explorar"> ＋ Encontrar séries </a>
 </section>
 
 <div class="filters" role="group" aria-label="Filtrar séries">
-  <button [class.active]="filter() === null" (click)="filter.set(null)">Todas <span>{{ counts().all }}</span></button>
-  <button [class.active]="filter() === SeriesStatus.InList" (click)="filter.set(SeriesStatus.InList)">Para assistir <span>{{ counts().inList }}</span></button>
-  <button [class.active]="filter() === SeriesStatus.Watching" (click)="filter.set(SeriesStatus.Watching)">Assistindo <span>{{ counts().watching }}</span></button>
-  <button [class.active]="filter() === SeriesStatus.Finished" (click)="filter.set(SeriesStatus.Finished)">Finalizadas <span>{{ counts().finished }}</span></button>
+  <button
+    type="button"
+    [class.active]="filter() === null"
+    (click)="filter.set(null)"
+  >
+    Todas
+    <span>{{ counts().all }}</span>
+  </button>
+
+  <button
+    type="button"
+    [class.active]="filter() === SeriesStatus.InList"
+    (click)="filter.set(SeriesStatus.InList)"
+  >
+    Para assistir
+    <span>{{ counts().inList }}</span>
+  </button>
+
+  <button
+    type="button"
+    [class.active]="filter() === SeriesStatus.Watching"
+    (click)="filter.set(SeriesStatus.Watching)"
+  >
+    Assistindo
+    <span>{{ counts().watching }}</span>
+  </button>
+
+  <button
+    type="button"
+    [class.active]="filter() === SeriesStatus.Finished"
+    (click)="filter.set(SeriesStatus.Finished)"
+  >
+    Finalizadas
+    <span>{{ counts().finished }}</span>
+  </button>
 </div>
 
 @if (loading()) {
-  <div class="loading-grid">@for (_ of [1,2,3,4]; track $index) { <div class="skeleton"></div> }</div>
+  <div class="loading-grid">
+    @for (_ of [1, 2, 3, 4]; track $index) {
+      <div class="skeleton"></div>
+    }
+  </div>
 } @else if (!visibleItems().length) {
-  <section class="empty-state"><span>◇</span><h2>Nenhuma série por aqui</h2><p>Explore o catálogo e adicione a primeira série a esta categoria.</p><a class="primary-link" routerLink="/explorar">Explorar catálogo</a></section>
+  <section class="empty-state">
+    <span>◇</span>
+
+    <h2>Nenhuma série por aqui</h2>
+
+    <p>Explore o catálogo e adicione a primeira série a esta categoria.</p>
+
+    <a class="primary-link" routerLink="/explorar"> Explorar catálogo </a>
+  </section>
 } @else {
   <div class="series-grid">
     @for (item of visibleItems(); track item.id) {
-      <article class="series-card">
-        <a class="poster" [routerLink]="['/serie', item.externalSeriesId]">
-          @if (item.posterUrl) { <img [src]="item.posterUrl" [alt]="'Pôster de ' + item.name"> } @else { <span>SeenIt</span> }
-          <span class="status-badge status-{{ item.status }}">{{ statusLabel(item.status) }}</span>
-        </a>
+      <article
+        class="series-card"
+        [class.menu-open]="menuAbertoId() === item.externalSeriesId"
+      >
+        <div class="poster-wrapper">
+          <a class="poster" [routerLink]="['/serie', item.externalSeriesId]">
+            @if (item.posterUrl) {
+              <img [src]="item.posterUrl" [alt]="'Pôster de ' + item.name" />
+            } @else {
+              <span>SeenIt</span>
+            }
+
+            <span class="status-badge status-{{ item.status }}">
+              {{ statusLabel(item.status) }}
+            </span>
+          </a>
+
+          <div class="series-menu-container">
+            <button
+              type="button"
+              class="menu-trigger"
+              aria-label="Abrir opções da série"
+              aria-haspopup="menu"
+              title="Mais opções"
+              [attr.aria-expanded]="menuAbertoId() === item.externalSeriesId"
+              (click)="alternarMenu(item.externalSeriesId, $event)"
+            >
+              <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+            </button>
+
+            @if (menuAbertoId() === item.externalSeriesId) {
+              <div
+                class="series-menu"
+                role="menu"
+                [attr.aria-label]="'Opções de ' + item.name"
+                (click)="$event.stopPropagation()"
+              >
+                <span class="menu-title"> Alterar status </span>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  [class.active]="item.status === SeriesStatus.InList"
+                  (click)="alterarStatus(item, SeriesStatus.InList)"
+                >
+                  <i class="pi pi-bookmark" aria-hidden="true"></i>
+
+                  <span>Para assistir</span>
+
+                  @if (item.status === SeriesStatus.InList) {
+                    <i class="pi pi-check status-check" aria-hidden="true"></i>
+                  }
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  [class.active]="item.status === SeriesStatus.Watching"
+                  (click)="alterarStatus(item, SeriesStatus.Watching)"
+                >
+                  <i class="pi pi-play" aria-hidden="true"></i>
+
+                  <span>Assistindo</span>
+
+                  @if (item.status === SeriesStatus.Watching) {
+                    <i class="pi pi-check status-check" aria-hidden="true"></i>
+                  }
+                </button>
+
+                <button
+                  type="button"
+                  role="menuitem"
+                  [class.active]="item.status === SeriesStatus.Finished"
+                  (click)="alterarStatus(item, SeriesStatus.Finished)"
+                >
+                  <i class="pi pi-check-circle" aria-hidden="true"></i>
+
+                  <span>Finalizada</span>
+
+                  @if (item.status === SeriesStatus.Finished) {
+                    <i class="pi pi-check status-check" aria-hidden="true"></i>
+                  }
+                </button>
+
+                <div class="menu-divider" role="separator"></div>
+
+                <button
+                  type="button"
+                  class="remove-option"
+                  role="menuitem"
+                  (click)="remove(item, $event)"
+                >
+                  <i class="pi pi-trash" aria-hidden="true"></i>
+
+                  <span>Remover</span>
+                </button>
+              </div>
+            }
+          </div>
+        </div>
+
         <div class="card-body">
-          <a [routerLink]="['/serie', item.externalSeriesId]"><h2>{{ item.name }}</h2></a>
-          <select [value]="item.status" (change)="setStatus(item, +$any($event.target).value)" aria-label="Alterar status">
-            <option [value]="SeriesStatus.InList">Para assistir</option><option [value]="SeriesStatus.Watching">Assistindo</option><option [value]="SeriesStatus.Finished">Finalizada</option>
-          </select>
-          <button class="remove" (click)="remove(item)">Remover da lista</button>
+          <a [routerLink]="['/serie', item.externalSeriesId]">
+            <h2>{{ item.name }}</h2>
+          </a>
         </div>
       </article>
     }

@@ -119,18 +119,61 @@ auth.MapPost("/login", async (
     TokenService tokens,
     CancellationToken cancellationToken) =>
 {
-    if (!MailAddress.TryCreate(request.Email, out _) || string.IsNullOrWhiteSpace(request.Password))
+    if (!MailAddress.TryCreate(request.Email, out _) ||
+        string.IsNullOrWhiteSpace(request.Password))
+    {
         return Results.Unauthorized();
+    }
 
-    var email = request.Email.Trim().ToLowerInvariant();
-    var user = await database.Users.SingleOrDefaultAsync(x => x.Email == email, cancellationToken);
-    if (user is null || hasher.VerifyHashedPassword(user, user.PasswordHash, request.Password)
-        == PasswordVerificationResult.Failed)
+    var email = request.Email
+        .Trim()
+        .ToLowerInvariant();
+
+    var user = await database.Users.SingleOrDefaultAsync(
+        x => x.Email == email,
+        cancellationToken
+    );
+
+    if (user is null)
+    {
         return Results.Unauthorized();
+    }
+
+    var verificationResult = hasher.VerifyHashedPassword(
+        user,
+        user.PasswordHash,
+        request.Password
+    );
+
+    if (verificationResult == PasswordVerificationResult.Failed)
+    {
+        return Results.Unauthorized();
+    }
+
+    if (verificationResult ==
+        PasswordVerificationResult.SuccessRehashNeeded)
+    {
+        user.PasswordHash = hasher.HashPassword(
+            user,
+            request.Password
+        );
+
+        await database.SaveChangesAsync(cancellationToken);
+    }
 
     var token = tokens.Create(user);
-    return Results.Ok(new AuthResponse(
-        token.Token, token.ExpiresAtUtc, new UserResponse(user.Id, user.Name, user.Email)));
+
+    return Results.Ok(
+        new AuthResponse(
+            token.Token,
+            token.ExpiresAtUtc,
+            new UserResponse(
+                user.Id,
+                user.Name,
+                user.Email
+            )
+        )
+    );
 });
 
 var series = app.MapGroup("/api/series").WithTags("Catálogo");
