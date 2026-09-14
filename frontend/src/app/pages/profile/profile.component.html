@@ -1,0 +1,179 @@
+<section class="profile-page">
+  <header class="profile-heading">
+    <p class="eyebrow">Sua conta</p>
+
+    <h1>Personalizar perfil</h1>
+
+    <p>Atualize como você aparece no SeenIt.</p>
+  </header>
+
+  <div class="profile-card">
+    <section class="avatar-panel">
+      <div class="avatar-preview">
+        @if (profile()?.avatarUrl) {
+          <img
+            [src]="profile()!.avatarUrl"
+            [alt]="'Foto de perfil de ' + profile()!.name"
+          />
+        } @else {
+          <span>
+            {{ profile()?.name?.charAt(0)?.toUpperCase() || "U" }}
+          </span>
+        }
+
+        <div class="avatar-decoration"></div>
+      </div>
+
+      <div class="avatar-information">
+        <h2>Foto de perfil</h2>
+
+        <p>Use uma imagem JPG, PNG ou WEBP com no máximo 5 MB.</p>
+      </div>
+
+      <input
+        #avatarInput
+        type="file"
+        accept="image/png,image/jpeg,image/webp"
+        hidden
+        (change)="selectAvatar($event)"
+      />
+
+      <div class="avatar-actions">
+        <button
+          type="button"
+          class="change-avatar-button"
+          [disabled]="uploadingAvatar()"
+          (click)="avatarInput.click()"
+        >
+          @if (uploadingAvatar()) {
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+
+            Enviando...
+          } @else {
+            <i class="pi pi-camera" aria-hidden="true"></i>
+
+            Alterar foto
+          }
+        </button>
+
+        @if (profile()?.avatarUrl) {
+          <button
+            type="button"
+            class="remove-avatar-button"
+            [disabled]="uploadingAvatar()"
+            (click)="deleteAvatar()"
+          >
+            <i class="pi pi-trash" aria-hidden="true"></i>
+
+            Remover
+          </button>
+        }
+      </div>
+    </section>
+
+    <form class="profile-form" [formGroup]="form" (ngSubmit)="saveProfile()">
+      <div class="form-heading">
+        <span class="form-icon">
+          <i class="pi pi-user" aria-hidden="true"></i>
+        </span>
+
+        <div>
+          <h2>Informações pessoais</h2>
+
+          <p>Gerencie os dados básicos da sua conta.</p>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label for="profile-name"> Nome </label>
+
+        <div
+          class="input-wrapper"
+          [class.invalid]="
+            form.controls.name.touched && form.controls.name.invalid
+          "
+        >
+          <i class="pi pi-user" aria-hidden="true"></i>
+
+          <input
+            id="profile-name"
+            type="text"
+            formControlName="name"
+            maxlength="120"
+            autocomplete="name"
+            placeholder="Digite seu nome"
+          />
+        </div>
+
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <span class="field-error"> Informe um nome válido. </span>
+        }
+      </div>
+
+      <div class="form-field">
+        <div class="label-row">
+          <label for="profile-email"> E-mail </label>
+
+          <span class="locked-label">
+            <i class="pi pi-lock" aria-hidden="true"></i>
+
+            Não editável
+          </span>
+        </div>
+
+        <div class="input-wrapper disabled">
+          <i class="pi pi-envelope" aria-hidden="true"></i>
+
+          <input
+            id="profile-email"
+            type="email"
+            [value]="profile()?.email || ''"
+            disabled
+          />
+        </div>
+
+        <small> O e-mail é utilizado para acessar sua conta. </small>
+      </div>
+
+      <div class="form-footer">
+        <span class="unsaved-message">
+          @if (form.dirty) {
+            Alterações ainda não salvas
+          }
+        </span>
+
+        <button
+          type="submit"
+          class="save-button"
+          [disabled]="form.invalid || form.pristine || savingProfile()"
+        >
+          @if (savingProfile()) {
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+
+            Salvando...
+          } @else {
+            <i class="pi pi-check" aria-hidden="true"></i>
+
+            Salvar alterações
+          }
+        </button>
+      </div>
+    </form>
+  </div>
+
+  @if (successMessage()) {
+    <div class="feedback-message success" role="status">
+      <i class="pi pi-check-circle" aria-hidden="true"></i>
+
+      {{ successMessage() }}
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="feedback-message error" role="alert">
+      <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+
+      {{ errorMessage() }}
+    </div>
+  }
+</section>

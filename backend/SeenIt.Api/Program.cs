@@ -76,6 +76,7 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
@@ -109,15 +110,11 @@ auth.MapPost("/register", async (
 
     var token = tokens.Create(user);
     return Results.Created("/api/auth/me", new AuthResponse(
-        token.Token, token.ExpiresAtUtc, new UserResponse(user.Id, user.Name, user.Email)));
+        token.Token, token.ExpiresAtUtc, new UserResponse(user.Id, user.Name, user.Email, user.AvatarFileName)));
 });
 
-auth.MapPost("/login", async (
-    LoginRequest request,
-    AppDbContext database,
-    IPasswordHasher<User> hasher,
-    TokenService tokens,
-    CancellationToken cancellationToken) =>
+auth.MapPost("/login", async (LoginRequest request, AppDbContext database, IPasswordHasher<User> hasher, TokenService tokens,
+    HttpContext httpContext, CancellationToken cancellationToken) =>
 {
     if (!MailAddress.TryCreate(request.Email, out _) ||
         string.IsNullOrWhiteSpace(request.Password))
@@ -163,6 +160,19 @@ auth.MapPost("/login", async (
 
     var token = tokens.Create(user);
 
+    string? avatarUrl = null;
+
+    if (!string.IsNullOrWhiteSpace(user.AvatarFileName))
+    {
+        var httpRequest = httpContext.Request;
+
+        avatarUrl =
+            $"{httpRequest.Scheme}://" +
+            $"{httpRequest.Host}" +
+            $"{httpRequest.PathBase}" +
+            $"/uploads/profiles/{Uri.EscapeDataString(user.AvatarFileName)}";
+    }
+
     return Results.Ok(
         new AuthResponse(
             token.Token,
@@ -170,7 +180,8 @@ auth.MapPost("/login", async (
             new UserResponse(
                 user.Id,
                 user.Name,
-                user.Email
+                user.Email,
+                avatarUrl
             )
         )
     );

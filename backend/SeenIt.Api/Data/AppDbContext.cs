@@ -18,6 +18,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
             entity.Property(x => x.Name).HasMaxLength(120).IsRequired();
             entity.Property(x => x.Email).HasMaxLength(200).IsRequired();
             entity.HasIndex(x => x.Email).IsUnique();
+            entity.Property(x => x.AvatarFileName).HasMaxLength(200);
         });
 
         modelBuilder.Entity<UserSeries>(entity =>

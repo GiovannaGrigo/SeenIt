@@ -8,8 +8,26 @@
       <a routerLink="/explorar" routerLinkActive="active">Explorar</a>
     </nav>
     <div class="account">
-      <span>{{ auth.user()?.name }}</span>
-      <button class="icon-button" type="button" (click)="logout()" aria-label="Sair da conta" title="Sair">
+      <a routerLink="/perfil" class="profile-link">
+        @if (auth.user()?.avatarUrl) {
+          <img
+            class="profile-avatar"
+            [src]="auth.user()!.avatarUrl"
+            [alt]="'Foto de perfil de ' + auth.user()!.name"
+          />
+        } @else {
+          <span class="profile-avatar profile-avatar-placeholder">
+            {{ auth.user()?.name?.charAt(0)?.toUpperCase() || "U" }}
+          </span>
+        }
+      </a>
+      <button
+        class="icon-button"
+        type="button"
+        (click)="logout()"
+        aria-label="Sair da conta"
+        title="Sair"
+      >
         <i class="pi pi-sign-out" aria-hidden="true"></i>
       </button>
     </div>

@@ -12,4 +12,4 @@ public sealed record LoginRequest(
     [Required] string Password);
 
 public sealed record AuthResponse(string Token, DateTime ExpiresAtUtc, UserResponse User);
-public sealed record UserResponse(Guid Id, string Name, string Email);
+public sealed record UserResponse(Guid Id, string Name, string Email, string? AvatarUrl);
