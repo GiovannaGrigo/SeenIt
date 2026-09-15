@@ -17,7 +17,7 @@ A aplicação permite pesquisar séries utilizando os dados da TVmaze, visualiza
 
 - C# e .NET 10
 - Entity Framework Core
-- SQLite
+- PostgreSQL
 - Autenticação com JWT
 
 ## O que é possível fazer
@@ -55,8 +55,6 @@ cd backend/SeenIt.Api
 dotnet restore
 dotnet run --urls "https://localhost:7042;http://localhost:5042"
 ```
-
-O banco SQLite `seenit.db` será criado automaticamente na primeira execução.
 
 A chave utilizada para gerar os tokens JWT está configurada para o ambiente de desenvolvimento. Antes de publicar a aplicação, ela deve ser substituída por uma chave segura armazenada em variável de ambiente ou em um gerenciador de segredos.
 
