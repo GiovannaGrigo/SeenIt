@@ -233,10 +233,10 @@
   height: 38px;
   padding: 0;
   place-items: center;
-  border: 1px solid rgb(255 255 255 / 18%);
+  border: 1px solid var(--border);
   border-radius: 50%;
-  background: rgb(12 13 22 / 78%);
-  color: white;
+  background: var(--overlay-surface);
+  color: var(--text-strong);
   cursor: pointer;
   backdrop-filter: blur(10px);
   box-shadow: 0 5px 18px rgb(0 0 0 / 25%);
@@ -266,7 +266,7 @@
   padding: 0.5rem;
   border: 1px solid var(--border);
   border-radius: 14px;
-  background: #171725;
+  background: var(--surface);
   box-shadow: 0 18px 45px rgb(0 0 0 / 55%);
 }
 
@@ -297,12 +297,12 @@
 
 .series-menu button:hover {
   background: rgb(108 92 255 / 12%);
-  color: white;
+  color: var(--text-strong);
 }
 
 .series-menu button.active {
   background: rgb(108 92 255 / 18%);
-  color: #b2a9ff;
+  color: var(--accent);
 }
 
 .series-menu button span {
