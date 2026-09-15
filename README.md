@@ -91,13 +91,3 @@ Crie uma conta, faça login e pesquise uma série para adicioná-la à sua lista
 | POST | `/api/my-series` | Sim | Adiciona ou atualiza uma série na lista |
 | PUT | `/api/my-series/{id}/status` | Sim | Altera o status da série |
 | DELETE | `/api/my-series/{id}` | Sim | Remove a série da lista |
-
-## Próximos passos
-
-Algumas melhorias que ainda podem ser adicionadas ao projeto:
-
-- Marcação individual de episódios assistidos.
-- Refresh token.
-- Cache das consultas realizadas na TVmaze.
-- Rate limiting na API.
-- Uso de migrations para controlar as alterações do banco em produção.
