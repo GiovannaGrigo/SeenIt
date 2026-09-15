@@ -129,6 +129,22 @@ export class SeriesDetailComponent implements OnInit {
 
       return novos;
     });
+
+    const serie = this.series();
+
+    if (!serie) {
+      return;
+    }
+
+    this.service.getMySeries().subscribe({
+      next: (series) => {
+        const minhaSerie = series.find(
+          (item) => item.externalSeriesId === serie.id,
+        );
+
+        this.savedStatus.set(minhaSerie?.status ?? null);
+      },
+    });
   }
 
   private carregarEpisodiosAssistidos(seriesId: number): void {

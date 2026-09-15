@@ -2,11 +2,12 @@ using Microsoft.EntityFrameworkCore;
 using SeenIt.Api.Data;
 using SeenIt.Api.Domain;
 using SeenIt.Api.DTOs.Episodios;
+using SeenIt.Api.External;
 using SeenIt.Api.Interfaces.Services;
 
 namespace SeenIt.Api.Services;
 
-public sealed class EpisodioAssistidoService(AppDbContext dbContext) : IEpisodioAssistidoService
+public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClient tvMazeClient) : IEpisodioAssistidoService
 {
     public async Task<EpisodioAssistidoResponse> MarcarComoAssistidoAsync(
         Guid userId,
@@ -99,10 +100,63 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext) : IEpisodio
                 });
         }
 
-        await dbContext.SaveChangesAsync(
+        await dbContext.SaveChangesAsync(cancellationToken);
+
+        await AtualizarStatusSerieAsync(
+            userId,
+            request.ExternalSeriesId,
             cancellationToken);
 
         return MapearResponse(episodioAssistido);
+    }
+
+    private async Task AtualizarStatusSerieAsync(Guid userId, int externalSeriesId, CancellationToken cancellationToken)
+    {
+        var serie = await dbContext.UserSeries
+            .SingleOrDefaultAsync(
+                x =>
+                    x.UserId == userId &&
+                    x.ExternalSeriesId == externalSeriesId,
+                cancellationToken);
+
+        if (serie is null)
+            return;
+
+        var episodiosDaSerie =
+            await tvMazeClient.GetEpisodesAsync(
+                externalSeriesId,
+                cancellationToken);
+
+        var idsEpisodios = episodiosDaSerie
+            .Select(x => x.Id)
+            .ToArray();
+
+        if (idsEpisodios.Length == 0)
+            return;
+
+        var totalAssistidos =
+            await dbContext.EpisodiosAssistidos
+                .Where(x =>
+                    x.UserId == userId &&
+                    x.ExternalSeriesId == externalSeriesId &&
+                    idsEpisodios.Contains(x.ExternalEpisodeId))
+                .Select(x => x.ExternalEpisodeId)
+                .Distinct()
+                .CountAsync(cancellationToken);
+
+        var novoStatus =
+            totalAssistidos == idsEpisodios.Length
+                ? SeriesStatus.Finished
+                : SeriesStatus.Watching;
+
+        if (serie.Status == novoStatus)
+            return;
+
+        serie.Status = novoStatus;
+        serie.UpdatedAtUtc = DateTime.UtcNow;
+
+        await dbContext.SaveChangesAsync(
+            cancellationToken);
     }
 
     public async Task<IReadOnlyList<EpisodioAssistidoResponse>> ObterPorSerieAsync(
