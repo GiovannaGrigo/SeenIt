@@ -25,6 +25,14 @@ export class ProfileService {
     return this.http.patch<ProfileResponse>(this.apiUrl, { name });
   }
 
+  deleteAccount(password: string) {
+    return this.http.delete<void>(this.apiUrl, {
+      body: {
+        password,
+      },
+    });
+  }
+
   updateAvatar(file: File): Observable<ProfileResponse> {
     const formData = new FormData();
 

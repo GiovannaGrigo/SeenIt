@@ -10,6 +10,7 @@ import { finalize } from "rxjs";
 
 import { AuthService } from "../../core/auth.service";
 import { ProfileResponse, ProfileService } from "../../core/profile.service";
+import { Router } from "@angular/router";
 
 @Component({
   selector: "app-profile",
@@ -21,14 +22,20 @@ import { ProfileResponse, ProfileService } from "../../core/profile.service";
 export class ProfileComponent implements OnInit {
   private readonly profileService = inject(ProfileService);
   private readonly auth = inject(AuthService);
-
+  private readonly router = inject(Router);
   readonly profile = signal<ProfileResponse | null>(null);
-
   readonly uploadingAvatar = signal(false);
   readonly savingProfile = signal(false);
-
   readonly successMessage = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
+  readonly deleteModalOpen = signal(false);
+  readonly deletingAccount = signal(false);
+  readonly deleteAccountError = signal<string | null>(null);
+
+  readonly deletePassword = new FormControl("", {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
 
   readonly form = new FormGroup({
     name: new FormControl("", {
@@ -170,5 +177,52 @@ export class ProfileComponent implements OnInit {
   private clearMessages(): void {
     this.successMessage.set(null);
     this.errorMessage.set(null);
+  }
+
+  openDeleteModal(): void {
+    this.deletePassword.reset();
+    this.deleteAccountError.set(null);
+    this.deleteModalOpen.set(true);
+  }
+
+  closeDeleteModal(): void {
+    if (this.deletingAccount()) {
+      return;
+    }
+
+    this.deleteModalOpen.set(false);
+    this.deleteAccountError.set(null);
+  }
+
+  deleteAccount(): void {
+    console.log("Tentativa de excluir conta:", {
+      senhaInformada: this.deletePassword.value.length > 0,
+      formularioValido: this.deletePassword.valid,
+      excluindo: this.deletingAccount(),
+    });
+    this.deletePassword.markAsTouched();
+
+    if (this.deletePassword.invalid || this.deletingAccount()) {
+      return;
+    }
+
+    this.deletingAccount.set(true);
+    this.deleteAccountError.set(null);
+
+    this.profileService
+      .deleteAccount(this.deletePassword.value)
+      .pipe(finalize(() => this.deletingAccount.set(false)))
+      .subscribe({
+        next: () => {
+          this.auth.logout();
+          this.router.navigateByUrl("/login");
+        },
+        error: (error) => {
+          this.deleteAccountError.set(
+            error.error?.message ??
+              "Não foi possível excluir sua conta. Tente novamente.",
+          );
+        },
+      });
   }
 }

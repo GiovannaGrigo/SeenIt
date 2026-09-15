@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SeenIt.Api.Data;
@@ -14,7 +15,8 @@ namespace SeenIt.Api.Controllers;
 public sealed class ProfileController(
     AppDbContext database,
     CurrentUserService currentUser,
-    IWebHostEnvironment environment)
+    IWebHostEnvironment environment,
+    IPasswordHasher<User> passwordHasher)
     : ControllerBase
 {
     private const long MaxAvatarSize = 5 * 1024 * 1024;
@@ -86,6 +88,58 @@ public sealed class ProfileController(
         await database.SaveChangesAsync(cancellationToken);
 
         return Ok(ToResponse(user));
+    }
+
+    [HttpDelete]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ExcluirConta([FromBody] DeleteAccountRequest request, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.Password))
+        {
+            return BadRequest(new
+            {
+                message = "Informe sua senha para excluir a conta."
+            });
+        }
+
+        var user = await database.Users.SingleOrDefaultAsync(
+            user => user.Id == currentUser.UserId,
+            cancellationToken);
+
+        if (user is null)
+        {
+            return Unauthorized();
+        }
+
+        var resultadoSenha = passwordHasher.VerifyHashedPassword(
+            user,
+            user.PasswordHash,
+            request.Password);
+
+        if (resultadoSenha == PasswordVerificationResult.Failed)
+        {
+            return BadRequest(new
+            {
+                message = "Senha incorreta."
+            });
+        }
+
+        var avatarFileName = user.AvatarFileName;
+
+        database.Users.Remove(user);
+
+        await database.SaveChangesAsync(cancellationToken);
+
+        var directory = Path.Combine(
+            environment.WebRootPath,
+            "uploads",
+            "profiles");
+
+        DeleteAvatarFile(directory, avatarFileName);
+
+        return NoContent();
     }
 
     [HttpPut("avatar")]

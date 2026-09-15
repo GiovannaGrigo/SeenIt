@@ -142,21 +142,30 @@
           }
         </span>
 
-        <button
-          type="submit"
-          class="save-button"
-          [disabled]="form.invalid || form.pristine || savingProfile()"
-        >
-          @if (savingProfile()) {
-            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+        <div class="form-actions">
+          <button
+            type="button"
+            class="delete-account-button"
+            (click)="openDeleteModal()"
+          >
+            <i class="pi pi-trash" aria-hidden="true"></i>
+            Excluir conta
+          </button>
 
-            Salvando...
-          } @else {
-            <i class="pi pi-check" aria-hidden="true"></i>
-
-            Salvar alterações
-          }
-        </button>
+          <button
+            type="submit"
+            class="save-button"
+            [disabled]="form.invalid || form.pristine || savingProfile()"
+          >
+            @if (savingProfile()) {
+              <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+              Salvando...
+            } @else {
+              <i class="pi pi-check" aria-hidden="true"></i>
+              Salvar alterações
+            }
+          </button>
+        </div>
       </div>
     </form>
   </div>
@@ -177,3 +186,83 @@
     </div>
   }
 </section>
+
+@if (deleteModalOpen()) {
+  <div class="delete-modal-backdrop" (click)="closeDeleteModal()">
+    <section
+      class="delete-modal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="delete-account-title"
+      (click)="$event.stopPropagation()"
+    >
+      <button
+        type="button"
+        class="delete-modal-close"
+        aria-label="Fechar confirmação"
+        (click)="closeDeleteModal()"
+      >
+        <i class="pi pi-times" aria-hidden="true"></i>
+      </button>
+
+      <span class="delete-modal-icon">
+        <i class="pi pi-exclamation-triangle" aria-hidden="true"></i>
+      </span>
+
+      <h2 id="delete-account-title">Excluir sua conta?</h2>
+
+      <p>
+        Esta ação é permanente. Sua lista, avaliações e foto de perfil serão
+        apagadas.
+      </p>
+
+      <div class="delete-modal-content">
+        <label for="delete-password"> Confirme sua senha para continuar </label>
+
+        <input
+          id="delete-password"
+          type="password"
+          [formControl]="deletePassword"
+          autocomplete="current-password"
+          placeholder="Sua senha atual"
+        />
+
+        @if (deletePassword.touched && deletePassword.invalid) {
+          <span class="field-error">Informe sua senha.</span>
+        }
+
+        @if (deleteAccountError()) {
+          <p class="delete-account-error" role="alert">
+            {{ deleteAccountError() }}
+          </p>
+        }
+
+        <div class="delete-modal-actions">
+          <button
+            type="button"
+            class="secondary"
+            [disabled]="deletingAccount()"
+            (click)="closeDeleteModal()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            type="button"
+            class="confirm-delete-button"
+            [disabled]="deletePassword.invalid || deletingAccount()"
+            (click)="deleteAccount()"
+          >
+            @if (deletingAccount()) {
+              <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+              Excluindo...
+            } @else {
+              <i class="pi pi-trash" aria-hidden="true"></i>
+              Excluir definitivamente
+            }
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+}
