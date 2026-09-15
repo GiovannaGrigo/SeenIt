@@ -1,8 +1,9 @@
-import { Component, signal } from "@angular/core";
+import { Component, inject, signal } from "@angular/core";
 import { FormBuilder, ReactiveFormsModule, Validators } from "@angular/forms";
 import { Router, RouterLink } from "@angular/router";
 import { finalize } from "rxjs";
 import { AuthService } from "../../core/auth.service";
+import { ThemeService } from "../../core/theme.service";
 
 @Component({
   standalone: true,
@@ -11,6 +12,7 @@ import { AuthService } from "../../core/auth.service";
   styleUrl: "../auth.scss",
 })
 export class LoginComponent {
+  readonly theme = inject(ThemeService);
   readonly loading = signal(false);
   readonly error = signal("");
   readonly form;

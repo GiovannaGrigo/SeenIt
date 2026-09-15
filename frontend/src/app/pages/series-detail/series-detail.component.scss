@@ -109,7 +109,7 @@
 
 .save-row select {
   background: var(--surface);
-  color: white;
+  color: var(--text);
   border: 1px solid var(--border);
 }
 
@@ -169,10 +169,10 @@
 .season-tabs > button {
   flex: 0 0 auto;
   padding: 0.6rem 0.9rem;
-  border: 1px solid #303047;
+  border: 1px solid var(--control-border);
   border-radius: 999px;
-  background: #161622;
-  color: #aaa7bf;
+  background: var(--control-background);
+  color: var(--control-text);
   font: inherit;
   font-size: 0.85rem;
   font-weight: 600;
@@ -188,9 +188,9 @@
 }
 
 .season-tabs > button:not(.active):hover {
-  border-color: #625a8d;
-  background: #1d1d2c;
-  color: #ffffff;
+  border-color: var(--control-hover-border);
+  background: var(--control-hover-background);
+  color: var(--text-strong);
 }
 
 .season-tabs > button.active,

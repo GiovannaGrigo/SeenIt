@@ -63,9 +63,9 @@
 }
 
 .filters button.active {
-  background: white;
-  color: #11121c;
-  border-color: white;
+  background: var(--text-strong);
+  color: var(--background);
+  border-color: var(--text-strong);
 }
 
 .filters span {
@@ -89,7 +89,7 @@
   aspect-ratio: 2/3;
   border-radius: 16px;
   overflow: hidden;
-  background: linear-gradient(145deg, #262842, #12131f);
+  background: var(--poster-background);
   position: relative;
   color: var(--muted);
   text-decoration: none;
@@ -140,7 +140,7 @@
 }
 
 .card-body a {
-  color: white;
+  color: var(--text-strong);
   text-decoration: none;
 }
 

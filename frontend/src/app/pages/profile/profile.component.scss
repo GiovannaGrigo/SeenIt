@@ -64,7 +64,7 @@
   height: 135px;
   place-items: center;
   margin-bottom: 1rem;
-  border: 4px solid #1a1a29;
+  border: 4px solid var(--surface);
   border-radius: 50%;
   background: linear-gradient(145deg, #786aff, #4e3ee6);
   box-shadow:
@@ -223,7 +223,7 @@
   overflow: hidden;
   border: 1px solid var(--border, #34344d);
   border-radius: 12px;
-  background: #10101a;
+  background: var(--input-background);
   transition:
     border-color 150ms ease,
     box-shadow 150ms ease;
@@ -261,7 +261,7 @@
 }
 
 .input-wrapper input::placeholder {
-  color: #6f6f84;
+  color: var(--muted);
 }
 
 .input-wrapper input:disabled {
@@ -524,7 +524,7 @@ button:disabled {
   border: 1px solid var(--border, #34344d);
   border-radius: 11px;
   outline: 0;
-  background: #10101a;
+  background: var(--input-background);
   color: var(--text, #f7f7ff);
   font: inherit;
   transition:
@@ -533,7 +533,7 @@ button:disabled {
 }
 
 .delete-modal input::placeholder {
-  color: #6f6f84;
+  color: var(--muted);
 }
 
 .delete-modal input:focus {

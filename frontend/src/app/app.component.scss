@@ -5,7 +5,7 @@
   align-items: center;
   padding: 0 4vw;
   border-bottom: 1px solid var(--border);
-  background: rgba(11, 12, 20, 0.82);
+  background: var(--overlay-surface);
   backdrop-filter: blur(18px);
   position: sticky;
   top: 0;
@@ -13,7 +13,7 @@
 }
 
 .brand {
-  color: var(--text);
+  color: var(--text-strong);
   text-decoration: none;
   font-size: 1.3rem;
   font-weight: 800;
@@ -21,6 +21,14 @@
   align-items: center;
   gap: 0.65rem;
   letter-spacing: -0.03em;
+}
+
+.brand-name.light-brand {
+  color: #17182a;
+}
+
+.brand-name.dark-brand {
+  color: #ffffff;
 }
 
 .brand-mark {
@@ -53,7 +61,7 @@ nav a {
 }
 
 nav a.active {
-  color: white;
+  color: var(--text-strong);
   background: var(--surface-soft);
 }
 
@@ -91,7 +99,7 @@ nav a.active {
 .icon-button:hover {
   border-color: rgb(108 92 255 / 45%);
   background: var(--surface-soft);
-  color: white;
+  color: var(--text-strong);
   transform: translateY(-1px);
 }
 
@@ -135,7 +143,7 @@ main.auth-main {
 }
 
 .profile-link:hover {
-  color: white;
+  color: var(--text-strong);
   transform: translateY(-1px);
 }
 
@@ -158,4 +166,18 @@ main.auth-main {
   color: white;
   font-size: 0.8rem;
   font-weight: 850;
+}
+
+.auth-theme-toggle {
+  position: fixed;
+  top: 1.5rem;
+  right: 2rem;
+  z-index: 30;
+}
+
+@media (max-width: 700px) {
+  .auth-theme-toggle {
+    top: 1rem;
+    right: 1rem;
+  }
 }

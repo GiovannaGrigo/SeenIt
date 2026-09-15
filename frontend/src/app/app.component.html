@@ -1,7 +1,14 @@
 @if (auth.isAuthenticated()) {
   <header class="app-header">
     <a class="brand" routerLink="/minha-lista" aria-label="SeenIt - início">
-      <span class="brand-mark">S</span><span>SeenIt</span>
+      <span class="brand-mark">S</span>
+      <span
+        class="brand-name"
+        [class.light-brand]="!theme.isDark()"
+        [class.dark-brand]="theme.isDark()"
+      >
+        SeenIt
+      </span>
     </a>
     <nav aria-label="Navegação principal">
       <a routerLink="/minha-lista" routerLinkActive="active">Minha lista</a>
@@ -24,6 +31,20 @@
       <button
         class="icon-button"
         type="button"
+        (click)="toggleTheme()"
+        [attr.aria-label]="
+          theme.isDark() ? 'Ativar tema claro' : 'Ativar tema escuro'
+        "
+        [title]="theme.isDark() ? 'Tema claro' : 'Tema escuro'"
+      >
+        <i
+          [class]="theme.isDark() ? 'pi pi-sun' : 'pi pi-moon'"
+          aria-hidden="true"
+        ></i>
+      </button>
+      <button
+        class="icon-button"
+        type="button"
         (click)="logout()"
         aria-label="Sair da conta"
         title="Sair"
@@ -32,5 +53,21 @@
       </button>
     </div>
   </header>
+}
+@if (!auth.isAuthenticated()) {
+  <button
+    class="icon-button auth-theme-toggle"
+    type="button"
+    (click)="toggleTheme()"
+    [attr.aria-label]="
+      theme.isDark() ? 'Ativar tema claro' : 'Ativar tema escuro'
+    "
+    [title]="theme.isDark() ? 'Tema claro' : 'Tema escuro'"
+  >
+    <i
+      [class]="theme.isDark() ? 'pi pi-sun' : 'pi pi-moon'"
+      aria-hidden="true"
+    ></i>
+  </button>
 }
 <main [class.auth-main]="!auth.isAuthenticated()"><router-outlet /></main>

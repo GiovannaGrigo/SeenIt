@@ -34,7 +34,7 @@
   min-width: 0;
   border: 0;
   background: transparent;
-  color: white;
+  color: var(--text);
   padding: 0.8rem 1rem;
   font: inherit;
   outline: 0;
@@ -70,7 +70,7 @@
 }
 
 .discovery h2 {
-  color: white;
+  color: var(--text-strong);
   margin: 0.5rem;
 }
 
@@ -123,7 +123,7 @@
 }
 
 .result-info a {
-  color: white;
+  color: var(--text-strong);
   text-decoration: none;
 }
 

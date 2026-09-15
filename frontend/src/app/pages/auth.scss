@@ -35,7 +35,7 @@
 .auth-brand {
   position: absolute;
   top: 2.5rem;
-  color: white;
+  color: var(--text-strong);
   text-decoration: none;
   font-weight: 800;
   font-size: 1.35rem;
@@ -44,13 +44,22 @@
   gap: 0.65rem;
 }
 
-.auth-brand span {
+.auth-brand-mark {
   display: grid;
   place-items: center;
   width: 36px;
   height: 36px;
   border-radius: 11px;
   background: var(--primary);
+  color: var(--text-on-primary);
+}
+
+.auth-brand-name.light-brand {
+  color: #17182a;
+}
+
+.auth-brand-name.dark-brand {
+  color: #ffffff;
 }
 
 .eyebrow {
@@ -103,7 +112,7 @@ h1 {
   place-items: center;
   min-height: 100vh;
   padding: 2rem;
-  background: rgba(20, 21, 34, 0.62);
+  background: var(--overlay-surface);
   border-left: 1px solid var(--border);
 }
 
@@ -132,8 +141,8 @@ input {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 0.95rem 1rem;
-  background: rgba(255, 255, 255, 0.04);
-  color: white;
+  background: var(--input-background);
+  color: var(--text);
   font: inherit;
   outline: none;
 }
@@ -173,7 +182,7 @@ input:focus {
 }
 
 .auth-link a {
-  color: white;
+  color: var(--text-strong);
   font-weight: 700;
 }
 

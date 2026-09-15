@@ -1,15 +1,25 @@
 @import "primeicons/primeicons.css";
 
 :root {
-  --background: #0b0c14;
-  --surface: #141522;
-  --surface-soft: #202238;
-  --border: rgba(255, 255, 255, 0.095);
-  --text: #f7f7fb;
-  --muted: #999caf;
+  --background: #f6f7fb;
+  --surface: #ffffff;
+  --surface-soft: #ececf7;
+  --border: rgba(25, 26, 45, 0.13);
+  --text: #17182a;
+  --muted: #686a7d;
+  --text-strong: #17182a;
+  --input-background: #f3f4f8;
+  --overlay-surface: rgba(255, 255, 255, 0.86);
+  --poster-background: linear-gradient(145deg, #e3e4f0, #cfd1e0);
+  --control-background: #ffffff;
+  --control-border: rgba(25, 26, 45, 0.18);
+  --control-text: #17182a;
+  --control-hover-background: #f0efff;
+  --control-hover-border: #625a8d;
+  --text-on-primary: #ffffff;
   --primary: #6d5dfc;
-  --accent: #a99fff;
-  color-scheme: dark;
+  --accent: #5949df;
+  color-scheme: light;
   font-family:
     Inter,
     ui-sans-serif,
@@ -18,6 +28,26 @@
     BlinkMacSystemFont,
     "Segoe UI",
     sans-serif;
+}
+
+:root.dark-theme {
+  --background: #0b0c14;
+  --surface: #141522;
+  --surface-soft: #202238;
+  --border: rgba(255, 255, 255, 0.095);
+  --text: #f7f7fb;
+  --muted: #999caf;
+  --text-strong: #ffffff;
+  --input-background: rgba(255, 255, 255, 0.04);
+  --overlay-surface: rgba(20, 21, 34, 0.82);
+  --poster-background: linear-gradient(145deg, #262842, #12131f);
+  --control-background: #161622;
+  --control-border: #303047;
+  --control-text: #aaa7bf;
+  --control-hover-background: #1d1d2c;
+  --control-hover-border: #625a8d;
+  --accent: #a99fff;
+  color-scheme: dark;
 }
 * {
   box-sizing: border-box;
@@ -34,6 +64,7 @@ body {
   background:
     radial-gradient(circle at 90% 0, rgba(109, 93, 252, 0.08), transparent 26%),
     var(--background);
+  transition: background-color 180ms ease, color 180ms ease;
 }
 button,
 input,
