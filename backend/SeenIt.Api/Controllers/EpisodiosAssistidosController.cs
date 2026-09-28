@@ -36,17 +36,6 @@ public sealed class EpisodiosAssistidosController(IEpisodioAssistidoService epis
         if (string.IsNullOrWhiteSpace(request.NomeEpisodio))
             return BadRequest("O nome do episódio é obrigatório.");
 
-        if (request.ExternalCharacterId <= 0 || string.IsNullOrWhiteSpace(request.PersonagemFavoritoNome))
-            return BadRequest("O nome do episódio é obrigatório.");
-
-
-        if (request.Sentimentos is null || request.Sentimentos.Count == 0
-        )
-        {
-                return BadRequest(
-                    "Selecione pelo menos uma emoção.");
-        }
-
         var resultado =
             await episodioAssistidoService.MarcarComoAssistidoAsync(
                 userId,

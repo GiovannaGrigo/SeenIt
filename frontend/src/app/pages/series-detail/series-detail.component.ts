@@ -8,7 +8,7 @@ import {
   SeriesStatus,
 } from "../../models/series.models";
 import { FormControl, ReactiveFormsModule } from "@angular/forms";
-import { EpisodioAssistidoResponse } from "../../models/episodio-assistido.model";
+import { EpisodioAssistidoResponse, MarcarEpisodioAssistidoRequest } from "../../models/episodio-assistido.model";
 import { EpisodioAssistidoService } from "../../core/episodio-assistido.service";
 import { EpisodioModalComponent } from "../../shared/episodio-modal/episodio-modal.component";
 import { NotificationService } from "../../core/notification.service";
@@ -38,7 +38,7 @@ export class SeriesDetailComponent implements OnInit {
   readonly seasons = computed(() =>
     [...new Set(this.episodes().map((x) => x.season))].sort((a, b) => a - b),
   );
-  
+
   readonly seasonEpisodes = computed(() =>
     this.episodes().filter((x) => x.season === this.selectedSeason()),
   );
@@ -47,6 +47,8 @@ export class SeriesDetailComponent implements OnInit {
   readonly episodiosAssistidos = signal<Map<number, EpisodioAssistidoResponse>>(
     new Map(),
   );
+
+  readonly episodioSalvando = signal<number | null>(null);
 
   readonly statusControl = new FormControl<SeriesStatus | null>(null);
 
@@ -201,5 +203,52 @@ export class SeriesDetailComponent implements OnInit {
         console.error("Erro ao carregar episódios assistidos:", error);
       },
     });
+  }
+
+  marcarRapidamenteComoAssistido(episodio: Episode, event: MouseEvent): void {
+    event.stopPropagation();
+
+    if (this.foiAssistido(episodio.id)) {
+      return;
+    }
+
+    const serie = this.series();
+
+    if (!serie) {
+      return;
+    }
+
+    this.episodioSalvando.set(episodio.id);
+
+    const request: MarcarEpisodioAssistidoRequest = {
+      externalSeriesId: serie.id,
+      temporada: episodio.season,
+      numeroEpisodio: episodio.number,
+      nomeEpisodio: episodio.name,
+      sentimentos: [],
+      externalCharacterId: 0,
+      personagemFavoritoNome: "",
+    };
+
+    this.episodioAssistidoService
+      .marcarComoAssistido(episodio.id, request)
+      .subscribe({
+        next: (registro) => {
+          this.episodioSalvando.set(null);
+
+          this.aoSalvarEpisodio(registro);
+
+          this.notification.success(
+            `"${episodio.name}" foi marcado como assistido.`,
+            "Episódio assistido",
+          );
+        },
+
+        error: (error) => {
+          this.episodioSalvando.set(null);
+
+          console.error("Erro ao marcar episódio como assistido:", error);
+        },
+      });
   }
 }

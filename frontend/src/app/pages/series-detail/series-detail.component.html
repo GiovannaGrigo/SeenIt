@@ -116,7 +116,29 @@
               {{ ep.summary || "Descrição ainda não disponível." }}
             </p>
           </div>
-          <div class="runtime">{{ ep.runtime ? ep.runtime + " min" : "" }}</div>
+          <div class="episode-actions">
+            @if (ep.runtime) {
+              <span class="runtime"> {{ ep.runtime }} min </span>
+            }
+
+            @if (!foiAssistido(ep.id)) {
+              <button
+                type="button"
+                class="quick-watch-button"
+                [disabled]="episodioSalvando() === ep.id"
+                (click)="marcarRapidamenteComoAssistido(ep, $event)"
+                aria-label="Marcar episódio como assistido"
+              >
+                @if (episodioSalvando() === ep.id) {
+                  <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+                  Marcando...
+                } @else {
+                  <i class="pi pi-plus" aria-hidden="true"></i>
+                  Assistir
+                }
+              </button>
+            }
+          </div>
         </article>
       }
     </div>

@@ -55,13 +55,17 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
             request.NomeEpisodio.Trim();
 
         episodioAssistido.ExternalCharacterId =
-            request.ExternalCharacterId;
+            request.ExternalCharacterId > 0
+                ? request.ExternalCharacterId
+                : 0;
 
         episodioAssistido.PersonagemFavoritoNome =
-            request.PersonagemFavoritoNome.Trim();
+            request.ExternalCharacterId > 0
+                ? request.PersonagemFavoritoNome?.Trim() ?? string.Empty
+                : string.Empty;
 
         var sentimentosSolicitados =
-            request.Sentimentos
+            (request.Sentimentos ?? [])
                 .Distinct()
                 .ToHashSet();
 
@@ -188,7 +192,9 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
         var votos = await dbContext.EpisodiosAssistidos
             .AsNoTracking()
             .Where(episodio =>
-                episodio.ExternalEpisodeId == externalEpisodeId)
+                episodio.ExternalEpisodeId == externalEpisodeId &&
+                episodio.ExternalCharacterId > 0 &&
+                episodio.PersonagemFavoritoNome != "")
             .GroupBy(episodio => new
             {
                 episodio.ExternalCharacterId,
