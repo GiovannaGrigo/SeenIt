@@ -72,7 +72,9 @@ body {
   background:
     radial-gradient(circle at 90% 0, rgba(109, 93, 252, 0.08), transparent 26%),
     var(--background);
-  transition: background-color 180ms ease, color 180ms ease;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
 }
 button,
 input,
@@ -89,4 +91,45 @@ select:focus-visible {
 ::selection {
   background: var(--primary);
   color: white;
+}
+
+.status-select-panel {
+  background: var(--surface) !important;
+  border: 1px solid var(--control-border) !important;
+  border-radius: 12px !important;
+  padding: 6px !important;
+  box-shadow:
+    0 14px 35px rgba(0, 0, 0, 0.18),
+    0 0 0 1px rgba(109, 93, 252, 0.04);
+}
+
+.status-select-panel .p-select-list {
+  padding: 0;
+}
+
+.status-select-panel .p-select-option {
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.status-select-panel .p-select-option:hover {
+  background: var(--control-hover-background) !important;
+  color: var(--text-strong) !important;
+}
+
+.status-select-panel .p-select-option.p-select-option-selected {
+  background: var(--select-selected-background) !important;
+  color: var(--select-selected-text) !important;
+  font-weight: 600;
+}
+
+.status-select-panel .p-select-option.p-select-option-selected:hover {
+  background: var(--select-selected-hover-background) !important;
+  color: var(--select-selected-text) !important;
 }

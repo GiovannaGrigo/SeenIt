@@ -12,10 +12,16 @@ import { EpisodioAssistidoResponse } from "../../models/episodio-assistido.model
 import { EpisodioAssistidoService } from "../../core/episodio-assistido.service";
 import { EpisodioModalComponent } from "../../shared/episodio-modal/episodio-modal.component";
 import { NotificationService } from "../../core/notification.service";
+import { SelectModule } from "primeng/select";
 
 @Component({
   standalone: true,
-  imports: [RouterLink, ReactiveFormsModule, EpisodioModalComponent],
+  imports: [
+    RouterLink,
+    ReactiveFormsModule,
+    EpisodioModalComponent,
+    SelectModule,
+  ],
   templateUrl: "./series-detail.component.html",
   styleUrl: "./series-detail.component.scss",
 })
@@ -32,14 +38,32 @@ export class SeriesDetailComponent implements OnInit {
   readonly seasons = computed(() =>
     [...new Set(this.episodes().map((x) => x.season))].sort((a, b) => a - b),
   );
+  
   readonly seasonEpisodes = computed(() =>
     this.episodes().filter((x) => x.season === this.selectedSeason()),
   );
+
   readonly episodioSelecionado = signal<Episode | null>(null);
   readonly episodiosAssistidos = signal<Map<number, EpisodioAssistidoResponse>>(
     new Map(),
   );
+
   readonly statusControl = new FormControl<SeriesStatus | null>(null);
+
+  readonly statusOptions = [
+    {
+      label: "Para assistir",
+      value: SeriesStatus.InList,
+    },
+    {
+      label: "Assistindo",
+      value: SeriesStatus.Watching,
+    },
+    {
+      label: "Finalizada",
+      value: SeriesStatus.Finished,
+    },
+  ];
 
   constructor(
     private route: ActivatedRoute,

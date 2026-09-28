@@ -1,7 +1,9 @@
 @if (loading()) {
   <p class="loading">Carregando detalhes...</p>
 } @else if (series(); as item) {
-  <a class="back" routerLink="/explorar"><i class="pi pi-arrow-left" aria-hidden="true"></i> Voltar para explorar</a>
+  <a class="back" routerLink="/explorar"
+    ><i class="pi pi-arrow-left" aria-hidden="true"></i> Voltar para explorar</a
+  >
   <section class="hero">
     <div class="poster">
       @if (item.originalPosterUrl || item.posterUrl) {
@@ -17,7 +19,10 @@
         {{ item.premiered?.slice(0, 4) || "Ano desconhecido" }} ·
         {{ item.status || "Status desconhecido" }}
         @if (item.rating) {
-          <span><i class="pi pi-star-fill" aria-hidden="true"></i> {{ item.rating }}</span>
+          <span
+            ><i class="pi pi-star-fill" aria-hidden="true"></i>
+            {{ item.rating }}</span
+          >
         }
       </div>
       <h1>{{ item.name }}</h1>
@@ -28,18 +33,17 @@
       </div>
       <p>{{ item.summary || "Descrição ainda não disponível." }}</p>
       <div class="save-row">
-        <select
+        <p-select
           [formControl]="statusControl"
-          aria-label="Alterar status da série"
-        >
-          <option [ngValue]="null" disabled>Alterar status</option>
-
-          <option [ngValue]="SeriesStatus.InList">Para assistir</option>
-
-          <option [ngValue]="SeriesStatus.Watching">Assistindo</option>
-
-          <option [ngValue]="SeriesStatus.Finished">Finalizada</option>
-        </select>
+          [options]="statusOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Alterar status"
+          appendTo="body"
+          styleClass="status-select"
+          panelStyleClass="status-select-panel"
+          ariaLabel="Alterar status da série"
+        />
         <button
           type="button"
           [disabled]="statusControl.value === null"
@@ -48,7 +52,10 @@
           Atualizar status
         </button>
         @if (savedStatus() !== null) {
-          <span class="current"><i class="pi pi-check" aria-hidden="true"></i> {{ label(savedStatus()) }}</span>
+          <span class="current"
+            ><i class="pi pi-check" aria-hidden="true"></i>
+            {{ label(savedStatus()) }}</span
+          >
         }
       </div>
     </div>
@@ -96,7 +103,10 @@
               </span>
 
               @if (foiAssistido(ep.id)) {
-                <span class="watched-badge"><i class="pi pi-check" aria-hidden="true"></i> Assistido</span>
+                <span class="watched-badge"
+                  ><i class="pi pi-check" aria-hidden="true"></i>
+                  Assistido</span
+                >
               }
             </div>
 
