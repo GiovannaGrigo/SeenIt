@@ -8,9 +8,10 @@ import {
   SeriesStatus,
 } from "../../models/series.models";
 import { FormControl, ReactiveFormsModule } from "@angular/forms";
-import { EpisodioAssistidoResponse } from "src/app/models/episodio-assistido.model";
-import { EpisodioAssistidoService } from "src/app/core/episodio-assistido.service";
-import { EpisodioModalComponent } from "src/app/shared/episodio-modal/episodio-modal.component";
+import { EpisodioAssistidoResponse } from "../../models/episodio-assistido.model";
+import { EpisodioAssistidoService } from "../../core/episodio-assistido.service";
+import { EpisodioModalComponent } from "../../shared/episodio-modal/episodio-modal.component";
+import { NotificationService } from "../../core/notification.service";
 
 @Component({
   standalone: true,
@@ -20,6 +21,7 @@ import { EpisodioModalComponent } from "src/app/shared/episodio-modal/episodio-m
 })
 export class SeriesDetailComponent implements OnInit {
   private readonly episodioAssistidoService = inject(EpisodioAssistidoService);
+  private readonly notification = inject(NotificationService);
 
   readonly SeriesStatus = SeriesStatus;
   readonly series = signal<SeriesDetails | null>(null);
@@ -82,11 +84,26 @@ export class SeriesDetailComponent implements OnInit {
       return;
     }
 
+    const jaEstavaNaLista = this.savedStatus() !== null;
+
     this.service.add(series, status).subscribe({
       next: () => {
         this.savedStatus.set(status);
         this.statusControl.reset();
+
+        if (jaEstavaNaLista) {
+          this.notification.success(
+            `Status alterado para "${this.label(status)}".`,
+            "Status atualizado",
+          );
+        } else {
+          this.notification.success(
+            `"${series.name}" foi adicionada à sua lista.`,
+            "Série adicionada",
+          );
+        }
       },
+
       error: (error) => {
         console.error("Erro ao atualizar status:", error);
       },

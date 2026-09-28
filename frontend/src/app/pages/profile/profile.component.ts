@@ -11,6 +11,7 @@ import { finalize } from "rxjs";
 import { AuthService } from "../../core/auth.service";
 import { ProfileResponse, ProfileService } from "../../core/profile.service";
 import { Router } from "@angular/router";
+import { NotificationService } from "../../core/notification.service";
 
 @Component({
   selector: "app-profile",
@@ -23,11 +24,10 @@ export class ProfileComponent implements OnInit {
   private readonly profileService = inject(ProfileService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly notification = inject(NotificationService);
   readonly profile = signal<ProfileResponse | null>(null);
   readonly uploadingAvatar = signal(false);
   readonly savingProfile = signal(false);
-  readonly successMessage = signal<string | null>(null);
-  readonly errorMessage = signal<string | null>(null);
   readonly deleteModalOpen = signal(false);
   readonly deletingAccount = signal(false);
   readonly deleteAccountError = signal<string | null>(null);
@@ -57,7 +57,6 @@ export class ProfileComponent implements OnInit {
     }
 
     this.uploadingAvatar.set(true);
-    this.clearMessages();
 
     this.profileService
       .updateAvatar(file)
@@ -75,11 +74,10 @@ export class ProfileComponent implements OnInit {
             avatarUrl: profile.avatarUrl,
           });
 
-          this.successMessage.set("Foto atualizada com sucesso.");
-        },
-
-        error: () => {
-          this.errorMessage.set("Não foi possível atualizar a foto.");
+          this.notification.success(
+            "Sua foto de perfil foi atualizada.",
+            "Foto atualizada",
+          );
         },
       });
   }
@@ -92,7 +90,6 @@ export class ProfileComponent implements OnInit {
     }
 
     this.savingProfile.set(true);
-    this.clearMessages();
 
     this.profileService
       .updateName(this.form.controls.name.value)
@@ -111,18 +108,16 @@ export class ProfileComponent implements OnInit {
 
           this.form.markAsPristine();
 
-          this.successMessage.set("Perfil atualizado com sucesso.");
-        },
-
-        error: () => {
-          this.errorMessage.set("Não foi possível atualizar o perfil.");
+          this.notification.success(
+            "Suas informações foram atualizadas.",
+            "Perfil atualizado",
+          );
         },
       });
   }
 
   deleteAvatar(): void {
     this.uploadingAvatar.set(true);
-    this.clearMessages();
 
     this.profileService
       .deleteAvatar()
@@ -146,12 +141,11 @@ export class ProfileComponent implements OnInit {
             avatarUrl: null,
           });
 
-          this.successMessage.set("Foto removida com sucesso.");
-        },
-
-        error: () => {
-          this.errorMessage.set("Não foi possível remover a foto.");
-        },
+          this.notification.success(
+            "Sua foto de perfil foi removida.",
+            "Foto removida",
+          );
+        }
       });
   }
 
@@ -166,17 +160,8 @@ export class ProfileComponent implements OnInit {
           name: profile.name,
           avatarUrl: profile.avatarUrl,
         });
-      },
-
-      error: () => {
-        this.errorMessage.set("Não foi possível carregar o perfil.");
-      },
+      }
     });
-  }
-
-  private clearMessages(): void {
-    this.successMessage.set(null);
-    this.errorMessage.set(null);
   }
 
   openDeleteModal(): void {
@@ -195,11 +180,6 @@ export class ProfileComponent implements OnInit {
   }
 
   deleteAccount(): void {
-    console.log("Tentativa de excluir conta:", {
-      senhaInformada: this.deletePassword.value.length > 0,
-      formularioValido: this.deletePassword.valid,
-      excluindo: this.deletingAccount(),
-    });
     this.deletePassword.markAsTouched();
 
     if (this.deletePassword.invalid || this.deletingAccount()) {
@@ -214,6 +194,10 @@ export class ProfileComponent implements OnInit {
       .pipe(finalize(() => this.deletingAccount.set(false)))
       .subscribe({
         next: () => {
+          this.notification.success(
+            "Sua conta foi excluída com sucesso.",
+            "Conta excluída",
+          );
           this.auth.logout();
           this.router.navigateByUrl("/login");
         },

@@ -4,6 +4,7 @@ import { Router, RouterLink } from "@angular/router";
 import { finalize } from "rxjs";
 import { AuthService } from "../../core/auth.service";
 import { ThemeService } from "../../core/theme.service";
+import { NotificationService } from "../../core/notification.service";
 
 @Component({
   standalone: true,
@@ -13,6 +14,7 @@ import { ThemeService } from "../../core/theme.service";
 })
 export class LoginComponent {
   readonly theme = inject(ThemeService);
+  private readonly notification = inject(NotificationService);
   readonly loading = signal(false);
   readonly error = signal("");
   readonly form;
@@ -40,6 +42,7 @@ export class LoginComponent {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: () => {
+          this.notification.success("Login realizado com sucesso.", "Bem-vindo");
           this.router
             .navigateByUrl("/minha-lista", { replaceUrl: true })
             .then((navegou) => {

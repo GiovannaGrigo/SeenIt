@@ -1,5 +1,13 @@
 @import "primeicons/primeicons.css";
 
+// Keep application icons on the PrimeIcons font. PrimeNG 21 uses SVG icons
+// internally, but must not override the font used by our `.pi pi-*` icons.
+.pi {
+  font-family: "primeicons" !important;
+  font-style: normal;
+  font-weight: normal;
+}
+
 :root {
   --background: #f6f7fb;
   --surface: #ffffff;

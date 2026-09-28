@@ -3,6 +3,7 @@ import {
   HostListener,
   OnInit,
   computed,
+  inject,
   signal,
 } from "@angular/core";
 
@@ -11,6 +12,7 @@ import { finalize } from "rxjs";
 
 import { SeriesService } from "../../core/series.service";
 import { SeriesStatus, UserSeries } from "../../models/series.models";
+import { NotificationService } from "../../core/notification.service";
 
 @Component({
   standalone: true,
@@ -19,6 +21,7 @@ import { SeriesStatus, UserSeries } from "../../models/series.models";
   styleUrl: "./library.component.scss",
 })
 export class LibraryComponent implements OnInit {
+  private readonly notification = inject(NotificationService);
   readonly SeriesStatus = SeriesStatus;
   readonly items = signal<UserSeries[]>([]);
   readonly loading = signal(true);
@@ -95,7 +98,13 @@ export class LibraryComponent implements OnInit {
         );
 
         this.menuAbertoId.set(null);
+
+        this.notification.success(
+          `Status alterado para "${this.statusLabel(status)}".`,
+          "Status atualizado",
+        );
       },
+
       error: (error) => {
         console.error("Erro ao alterar o status:", error);
       },
@@ -113,10 +122,12 @@ export class LibraryComponent implements OnInit {
         this.items.update((items) =>
           items.filter((registro) => registro.id !== item.id),
         );
-      },
-      error: (error) => {
-        console.error("Erro ao remover a série:", error);
-      },
+
+        this.notification.success(
+          `"${item.name}" foi removida da sua lista.`,
+          "Série removida",
+        );
+      }
     });
   }
 

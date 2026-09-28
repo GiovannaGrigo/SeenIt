@@ -20,8 +20,9 @@ import {
   SentimentoEpisodio,
   VotacaoPersonagemResponse,
 } from "../../models/episodio-assistido.model";
-import { EpisodioAssistidoService } from "src/app/core/episodio-assistido.service";
-import { Episode } from "src/app/models/series.models";
+import { EpisodioAssistidoService } from "../../core/episodio-assistido.service";
+import { Episode } from "../../models/series.models";
+import { NotificationService } from "../../core/notification.service";
 
 @Component({
   selector: "app-episodio-modal",
@@ -32,6 +33,7 @@ import { Episode } from "src/app/models/series.models";
 })
 export class EpisodioModalComponent implements OnInit {
   private readonly service = inject(EpisodioAssistidoService);
+  private readonly notification = inject(NotificationService);
 
   readonly episodio = input.required<Episode>();
   readonly seriesId = input.required<number>();
@@ -175,11 +177,17 @@ export class EpisodioModalComponent implements OnInit {
           this.votacao.set(votacao);
           this.salvoComSucesso.set(true);
 
-          // Avisa a tela de detalhes para mostrar o badge.
           this.salvo.emit(registro);
+
+          this.notification.success(
+            `${this.episodio().name} foi marcado como assistido.`,
+            "Episódio assistido",
+          );
         },
         error: () => {
-          this.mensagemErro.set("Não foi possível salvar o episódio.");
+          this.mensagemErro.set(
+            "Selecione pelo menos uma emoção e um personagem.",
+          );
         },
       });
   }

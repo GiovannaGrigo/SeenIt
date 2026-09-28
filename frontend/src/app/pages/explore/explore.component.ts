@@ -1,4 +1,4 @@
-import { Component, signal } from "@angular/core";
+import { Component, inject, signal } from "@angular/core";
 import {
   FormControl,
   ReactiveFormsModule,
@@ -9,6 +9,7 @@ import { RouterLink } from "@angular/router";
 import { finalize } from "rxjs";
 import { SeriesService } from "../../core/series.service";
 import { SeriesStatus, SeriesSummary } from "../../models/series.models";
+import { NotificationService } from "../../core/notification.service";
 
 @Component({
   standalone: true,
@@ -27,6 +28,8 @@ export class ExploreComponent {
   readonly loading = signal(false);
   readonly searched = signal(false);
   readonly saved = signal(new Set<number>());
+  private readonly notification = inject(NotificationService);
+
   constructor(private readonly service: SeriesService) {}
 
   search(): void {
@@ -47,12 +50,16 @@ export class ExploreComponent {
       next: () => {
         this.saved.update((ids) => {
           const updated = new Set(ids);
+
           updated.add(item.id);
+
           return updated;
         });
-      },
-      error: (error) => {
-        console.error("Erro ao adicionar série:", error);
+
+        this.notification.success(
+          `"${item.name}" foi adicionada à sua lista.`,
+          "Série adicionada",
+        );
       },
     });
   }
