@@ -46,7 +46,7 @@
         />
         <button
           type="button"
-          [disabled]="statusControl.value === null"
+          [disabled]="statusControl.value === null || temporadaSalvando() !== null"
           (click)="save(statusControl.value!)"
         >
           Atualizar status
@@ -80,6 +80,29 @@
         }
       </div>
     </div>
+    @if (seasonEpisodes().length) {
+      <div class="season-actions">
+        <button
+          type="button"
+          class="quick-watch-button"
+          [disabled]="carregandoAssistidos() || temporadaSalvando() !== null || episodioSalvando() !== null"
+          [attr.aria-busy]="temporadaSalvando() !== null"
+          [attr.aria-describedby]="temporadaAssistida() ? 'season-unwatch-note' : null"
+          (click)="alternarTemporadaAssistida()"
+        >
+          @if (temporadaSalvando() !== null) {
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
+            {{ desmarcandoTemporada() ? 'Desmarcando' : 'Marcando' }} temporada {{ temporadaSalvando() }}...
+          } @else if (temporadaAssistida()) {
+            <i class="pi pi-undo" aria-hidden="true"></i>
+            Desmarcar temporada {{ selectedSeason() }}
+          } @else {
+            <i class="pi pi-check" aria-hidden="true"></i>
+            Marcar temporada {{ selectedSeason() }} como assistida
+          }
+        </button>
+      </div>
+    }
     <div class="episode-list">
       @for (ep of seasonEpisodes(); track ep.id) {
         <article
@@ -125,7 +148,7 @@
               <button
                 type="button"
                 class="quick-watch-button"
-                [disabled]="episodioSalvando() === ep.id"
+                [disabled]="episodioSalvando() === ep.id || temporadaSalvando() !== null || carregandoAssistidos()"
                 (click)="marcarRapidamenteComoAssistido(ep, $event)"
                 aria-label="Marcar episódio como assistido"
               >

@@ -49,6 +49,13 @@ export class SeriesDetailComponent implements OnInit {
   );
 
   readonly episodioSalvando = signal<number | null>(null);
+  readonly temporadaSalvando = signal<number | null>(null);
+  readonly desmarcandoTemporada = signal(false);
+  readonly carregandoAssistidos = signal(true);
+  readonly temporadaAssistida = computed(() =>
+    this.seasonEpisodes().length > 0 &&
+    this.seasonEpisodes().every((ep) => this.foiAssistido(ep.id)),
+  );
 
   readonly statusControl = new FormControl<SeriesStatus | null>(null);
 
@@ -154,6 +161,7 @@ export class SeriesDetailComponent implements OnInit {
   }
 
   abrirModal(episodio: Episode): void {
+    if (this.temporadaSalvando() !== null) return;
     this.episodioSelecionado.set(episodio);
   }
 
@@ -178,6 +186,10 @@ export class SeriesDetailComponent implements OnInit {
       return novos;
     });
 
+    this.atualizarStatusSalvo();
+  }
+
+  private atualizarStatusSalvo(): void {
     const serie = this.series();
 
     if (!serie) {
@@ -196,6 +208,7 @@ export class SeriesDetailComponent implements OnInit {
   }
 
   private carregarEpisodiosAssistidos(seriesId: number): void {
+    this.carregandoAssistidos.set(true);
     this.episodioAssistidoService.obterAssistidosPorSerie(seriesId).subscribe({
       next: (registros) => {
         this.episodiosAssistidos.set(
@@ -203,6 +216,7 @@ export class SeriesDetailComponent implements OnInit {
             registros.map((registro) => [registro.externalEpisodeId, registro]),
           ),
         );
+        this.carregandoAssistidos.set(false);
       },
       error: (error) => {
         console.error("Erro ao carregar episódios assistidos:", error);
@@ -210,10 +224,47 @@ export class SeriesDetailComponent implements OnInit {
     });
   }
 
+  alternarTemporadaAssistida(): void {
+    const serie = this.series();
+    const temporada = this.selectedSeason();
+    if (!serie || this.carregandoAssistidos() ||
+        !this.seasonEpisodes().length || this.temporadaSalvando() !== null ||
+        this.episodioSalvando() !== null || this.episodioSelecionado()) return;
+
+    const desmarcar = this.temporadaAssistida();
+    this.desmarcandoTemporada.set(desmarcar);
+    this.temporadaSalvando.set(temporada);
+    const operacao = desmarcar
+      ? this.episodioAssistidoService.desmarcarTemporada(serie.id, temporada)
+      : this.episodioAssistidoService.marcarTemporadaComoAssistida(serie.id, temporada);
+    operacao
+      .subscribe({
+        next: (registros) => {
+          this.episodiosAssistidos.set(new Map(
+            registros.map((registro) => [registro.externalEpisodeId, registro]),
+          ));
+          this.temporadaSalvando.set(null);
+          this.atualizarStatusSalvo();
+          this.notification.success(
+            desmarcar
+              ? `Temporada ${temporada} desmarcada. Os episódios voltaram a ficar pendentes.`
+              : `Temporada ${temporada} marcada como assistida.`,
+            desmarcar ? "Temporada desmarcada" : "Temporada assistida",
+          );
+        },
+        error: () => {
+          this.temporadaSalvando.set(null);
+          this.carregarEpisodiosAssistidos(serie.id);
+          this.atualizarStatusSalvo();
+          this.notification.error("Não foi possível atualizar a temporada. Tente novamente.");
+        },
+      });
+  }
+
   marcarRapidamenteComoAssistido(episodio: Episode, event: MouseEvent): void {
     event.stopPropagation();
 
-    if (this.foiAssistido(episodio.id)) {
+    if (this.foiAssistido(episodio.id) || this.temporadaSalvando() !== null || this.carregandoAssistidos()) {
       return;
     }
 

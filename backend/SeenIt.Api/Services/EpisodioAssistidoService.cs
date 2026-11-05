@@ -9,6 +9,50 @@ namespace SeenIt.Api.Services;
 
 public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClient tvMazeClient) : IEpisodioAssistidoService
 {
+    public async Task<IReadOnlyList<EpisodioAssistidoResponse>> DesmarcarTemporadaAsync(
+        Guid userId, int externalSeriesId, int temporada, CancellationToken cancellationToken)
+    {
+        var registros = await dbContext.EpisodiosAssistidos
+            .Include(x => x.Sentimentos)
+            .Where(x => x.UserId == userId && x.ExternalSeriesId == externalSeriesId && x.Temporada == temporada)
+            .ToListAsync(cancellationToken);
+
+        dbContext.EpisodiosAssistidos.RemoveRange(registros);
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await AtualizarStatusSerieAsync(userId, externalSeriesId, cancellationToken);
+        return await ObterPorSerieAsync(userId, externalSeriesId, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<EpisodioAssistidoResponse>> MarcarTemporadaComoAssistidaAsync(
+        Guid userId, int externalSeriesId, int temporada, CancellationToken cancellationToken)
+    {
+        var episodios = await tvMazeClient.GetEpisodesAsync(externalSeriesId, cancellationToken);
+        var idsAssistidos = (await dbContext.EpisodiosAssistidos
+            .Where(x => x.UserId == userId && x.ExternalSeriesId == externalSeriesId)
+            .Select(x => x.ExternalEpisodeId)
+            .ToListAsync(cancellationToken)).ToHashSet();
+
+        foreach (var episodio in episodios.Where(x => x.Season == temporada))
+        {
+            if (!idsAssistidos.Add(episodio.Id))
+                continue;
+
+            dbContext.EpisodiosAssistidos.Add(new EpisodioAssistido
+            {
+                UserId = userId,
+                ExternalSeriesId = externalSeriesId,
+                ExternalEpisodeId = episodio.Id,
+                Temporada = episodio.Season,
+                NumeroEpisodio = episodio.Number,
+                NomeEpisodio = episodio.Name
+            });
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await AtualizarStatusSerieAsync(userId, externalSeriesId, cancellationToken);
+        return await ObterPorSerieAsync(userId, externalSeriesId, cancellationToken);
+    }
+
     public async Task MarcarTodosComoAssistidosAsync(Guid userId, int externalSeriesId, CancellationToken cancellationToken)
     {
         var episodios = await tvMazeClient.GetEpisodesAsync(externalSeriesId, cancellationToken);
@@ -174,7 +218,9 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
                 .CountAsync(cancellationToken);
 
         var novoStatus =
-            totalAssistidos == idsEpisodios.Length
+            totalAssistidos == 0
+                ? SeriesStatus.InList
+                : totalAssistidos == idsEpisodios.Length
                 ? SeriesStatus.Finished
                 : SeriesStatus.Watching;
 

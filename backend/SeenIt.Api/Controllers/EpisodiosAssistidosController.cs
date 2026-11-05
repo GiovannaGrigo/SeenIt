@@ -12,6 +12,40 @@ namespace SeenIt.Api.Controllers;
 [Route("api/episodios")]
 public sealed class EpisodiosAssistidosController(IEpisodioAssistidoService episodioAssistidoService) : ControllerBase
 {
+    [HttpDelete("series/{externalSeriesId:int}/temporadas/{temporada:int}/assistida")]
+    [ProducesResponseType<IReadOnlyList<EpisodioAssistidoResponse>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<IReadOnlyList<EpisodioAssistidoResponse>>> DesmarcarTemporada(
+        [FromRoute] int externalSeriesId, [FromRoute] int temporada, CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId))
+            return Unauthorized();
+
+        if (externalSeriesId <= 0 || temporada <= 0)
+            return BadRequest("A série ou temporada informada é inválida.");
+
+        return Ok(await episodioAssistidoService.DesmarcarTemporadaAsync(
+            userId, externalSeriesId, temporada, cancellationToken));
+    }
+
+    [HttpPut("series/{externalSeriesId:int}/temporadas/{temporada:int}/assistida")]
+    [ProducesResponseType<IReadOnlyList<EpisodioAssistidoResponse>>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<IReadOnlyList<EpisodioAssistidoResponse>>> MarcarTemporadaComoAssistida(
+        [FromRoute] int externalSeriesId, [FromRoute] int temporada, CancellationToken cancellationToken)
+    {
+        if (!TryGetUserId(out var userId))
+            return Unauthorized();
+
+        if (externalSeriesId <= 0 || temporada <= 0)
+            return BadRequest("A série ou temporada informada é inválida.");
+
+        return Ok(await episodioAssistidoService.MarcarTemporadaComoAssistidaAsync(
+            userId, externalSeriesId, temporada, cancellationToken));
+    }
+
     [HttpPut("{externalEpisodeId:int}/assistido")]
     [ProducesResponseType<EpisodioAssistidoResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

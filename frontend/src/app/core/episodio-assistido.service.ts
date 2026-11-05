@@ -51,4 +51,23 @@ export class EpisodioAssistidoService {
       request,
     );
   }
+
+  marcarTemporadaComoAssistida(
+    seriesId: number,
+    temporada: number,
+  ): Observable<EpisodioAssistidoResponse[]> {
+    return this.http.put<EpisodioAssistidoResponse[]>(
+      `${this.apiUrl}/episodios/series/${seriesId}/temporadas/${temporada}/assistida`,
+      {},
+    );
+  }
+
+  desmarcarTemporada(
+    seriesId: number,
+    temporada: number,
+  ): Observable<EpisodioAssistidoResponse[]> {
+    return this.http.delete<EpisodioAssistidoResponse[]>(
+      `${this.apiUrl}/episodios/series/${seriesId}/temporadas/${temporada}/assistida`,
+    );
+  }
 }

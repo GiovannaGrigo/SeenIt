@@ -221,6 +221,24 @@
   margin-top: 1.5rem;
 }
 
+.season-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.season-actions small {
+  max-width: 36rem;
+  color: var(--muted);
+  text-align: right;
+}
+
+.season-actions .quick-watch-button:disabled {
+  cursor: default;
+}
+
 .episode-list article {
   display: grid;
   grid-template-columns: 180px 1fr auto;
