@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import { Component, ElementRef, OnInit, ViewChild, computed, inject, signal } from "@angular/core";
 import {
   FormControl,
   FormGroup,
@@ -12,11 +12,12 @@ import { AuthService } from "../../core/auth.service";
 import { ProfileResponse, ProfileService } from "../../core/profile.service";
 import { Router } from "@angular/router";
 import { NotificationService } from "../../core/notification.service";
+import { WatchTimeComponent } from "./watch-time.component";
 
 @Component({
   selector: "app-profile",
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, WatchTimeComponent],
   templateUrl: "./profile.component.html",
   styleUrl: "./profile.component.scss",
 })
@@ -31,6 +32,66 @@ export class ProfileComponent implements OnInit {
   readonly deleteModalOpen = signal(false);
   readonly deletingAccount = signal(false);
   readonly deleteAccountError = signal<string | null>(null);
+  @ViewChild('passwordDialog') private passwordDialog!: ElementRef<HTMLDialogElement>;
+  readonly changingPassword = signal(false);
+  readonly passwordError = signal<string | null>(null);
+  readonly visiblePasswords = signal<Record<string, boolean>>({});
+  readonly stats = signal<{ series: number; episodes: number; favorites: number } | null>(null);
+  readonly initials = computed(() => {
+    const names = this.profile()?.name.trim().split(/\s+/) ?? [];
+    return (names.length > 1 ? names[0][0] + names[names.length - 1][0] : names[0]?.[0] ?? 'U').toUpperCase();
+  });
+  readonly passwordFields = [
+    { key: 'currentPassword', label: 'Senha atual', placeholder: 'Digite sua senha atual', autocomplete: 'current-password' },
+    { key: 'newPassword', label: 'Nova senha', placeholder: 'Mínimo de 8 caracteres', autocomplete: 'new-password' },
+    { key: 'confirmPassword', label: 'Confirmar nova senha', placeholder: 'Repita a nova senha', autocomplete: 'new-password' },
+  ] as const;
+  readonly passwordForm = new FormGroup({
+    currentPassword: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    newPassword: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.minLength(8), Validators.maxLength(128)] }),
+    confirmPassword: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+  }, { validators: (group) => group.get('newPassword')?.value === group.get('confirmPassword')?.value ? null : { mismatch: true } });
+
+  discardChanges(): void {
+    this.form.reset({ name: this.profile()?.name ?? '' });
+  }
+
+  openPasswordModal(): void {
+    this.passwordForm.reset();
+    this.passwordError.set(null);
+    this.visiblePasswords.set({});
+    this.passwordDialog.nativeElement.showModal();
+  }
+
+  closePasswordModal(): void {
+    if (this.changingPassword()) return;
+    this.passwordDialog.nativeElement.close();
+    this.passwordForm.reset();
+    this.passwordError.set(null);
+    this.visiblePasswords.set({});
+  }
+
+  togglePassword(key: string): void {
+    this.visiblePasswords.update(value => ({ ...value, [key]: !value[key] }));
+  }
+
+  changePassword(): void {
+    this.passwordForm.markAllAsTouched();
+    if (this.passwordForm.invalid || this.changingPassword()) return;
+    const { currentPassword, newPassword } = this.passwordForm.getRawValue();
+    this.changingPassword.set(true);
+    this.passwordError.set(null);
+    this.profileService.changePassword(currentPassword, newPassword)
+      .pipe(finalize(() => this.changingPassword.set(false)))
+      .subscribe({
+        next: () => {
+          this.changingPassword.set(false);
+          this.closePasswordModal();
+          this.notification.success('Sua senha foi atualizada.', 'Senha atualizada');
+        },
+        error: error => this.passwordError.set(error.error?.message ?? 'Não foi possível alterar sua senha. Tente novamente.'),
+      });
+  }
 
   readonly deletePassword = new FormControl("", {
     nonNullable: true,
@@ -40,12 +101,13 @@ export class ProfileComponent implements OnInit {
   readonly form = new FormGroup({
     name: new FormControl("", {
       nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(120)],
+      validators: [Validators.required, Validators.pattern(/\S/), Validators.maxLength(120)],
     }),
   });
 
   ngOnInit(): void {
     this.loadProfile();
+    this.profileService.getStats().subscribe({ next: stats => this.stats.set(stats) });
   }
 
   selectAvatar(event: Event): void {

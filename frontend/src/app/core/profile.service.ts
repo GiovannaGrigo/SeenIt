@@ -9,6 +9,13 @@ export interface ProfileResponse {
   avatarUrl: string | null;
 }
 
+export interface WatchTimeResponse {
+  totalMinutes: number;
+  episodesWithoutRuntime: number;
+  today: string;
+  days: { date: string; minutes: number }[];
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -23,6 +30,18 @@ export class ProfileService {
 
   updateName(name: string): Observable<ProfileResponse> {
     return this.http.patch<ProfileResponse>(this.apiUrl, { name });
+  }
+
+  getStats(): Observable<{ series: number; episodes: number; favorites: number }> {
+    return this.http.get<{ series: number; episodes: number; favorites: number }>(`${this.apiUrl}/stats`);
+  }
+
+  getWatchTime(timeZone: string): Observable<WatchTimeResponse> {
+    return this.http.get<WatchTimeResponse>(`${this.apiUrl}/watch-time`, { params: { timeZone } });
+  }
+
+  changePassword(currentPassword: string, newPassword: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/password`, { currentPassword, newPassword });
   }
 
   deleteAccount(password: string) {

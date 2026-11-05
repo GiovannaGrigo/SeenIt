@@ -1,0 +1,39 @@
+<section class="watch-time" aria-labelledby="watch-time-title" [attr.aria-busy]="loading()">
+  <div class="watch-summary">
+    <h2 id="watch-time-title">Tempo assistido</h2>
+    @if (loading()) {
+      <p class="status" role="status">Calculando seu tempo assistido…</p>
+    } @else if (error()) {
+      <p class="status" role="status">Não foi possível carregar seu tempo assistido.</p>
+      <button type="button" class="retry" (click)="load()">Tentar novamente</button>
+    } @else {
+      <p class="total" [title]="fullTotal() + ' no total. Cada mês equivale a 30 dias.'">
+        @for (part of total(); track $index) {
+          <span class="time-part" [class.accent]="part.unit === 'horas' || part.unit === 'hora' || total().length === 1">
+            <strong>{{ part.value }}</strong><span>{{ part.unit }}</span>
+          </span>
+        }
+      </p>
+      <p class="subtitle">assistindo séries</p>
+      @if (data()!.episodesWithoutRuntime > 0) {
+        <p class="runtime-note">{{ data()!.episodesWithoutRuntime }} episódio(s) sem duração disponível no catálogo.</p>
+      }
+    }
+  </div>
+  @if (data() && !loading() && !error()) {
+    <figure class="weekly-chart" aria-label="Tempo assistido por dia nesta semana, de segunda a domingo">
+      <ol class="chart-days">
+        @for (day of days(); track day.date) {
+          <li [class.today]="day.isToday">
+            <span class="day-bar" tabindex="0" role="img" [attr.aria-label]="day.description" [attr.aria-current]="day.isToday ? 'date' : null">
+              <span class="bar-slot" aria-hidden="true"><span class="bar" [class.empty]="day.minutes === 0" [style.height.%]="day.height / 90 * 100"></span></span>
+              <span class="day-label" aria-hidden="true">{{ day.label }}</span>
+              <span class="chart-tooltip" aria-hidden="true">{{ day.description }}</span>
+            </span>
+          </li>
+        }
+      </ol>
+      <figcaption>{{ hoursInChart() ? 'Horas' : 'Minutos' }} por dia · esta semana</figcaption>
+    </figure>
+  }
+</section>

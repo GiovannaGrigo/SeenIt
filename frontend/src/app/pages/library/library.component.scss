@@ -389,11 +389,15 @@
 }
 
 .series-menu {
-  position: absolute;
-  top: calc(100% + 0.55rem);
-  right: 0;
+  // The top layer keeps the menu outside the carousel's overflow clipping.
+  position: fixed;
+  inset: auto;
+  margin: 0;
   display: grid;
-  width: 215px;
+  width: min(215px, calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 0.5rem;
   border: 1px solid var(--border);
   border-radius: 14px;

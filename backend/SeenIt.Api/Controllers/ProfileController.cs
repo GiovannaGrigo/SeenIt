@@ -49,6 +49,58 @@ public sealed class ProfileController(
         return Ok(ToResponse(user));
     }
 
+    [HttpGet("watch-time")]
+    public async Task<ActionResult<WatchTimeResponse>> GetWatchTime(
+        [FromQuery] string timeZone,
+        [FromServices] WatchTimeService watchTime,
+        CancellationToken cancellationToken)
+    {
+        TimeZoneInfo zone;
+        try { zone = TimeZoneInfo.FindSystemTimeZoneById(timeZone); }
+        catch (Exception error) when (error is TimeZoneNotFoundException or InvalidTimeZoneException or ArgumentException)
+        {
+            return BadRequest(new { message = "Fuso horário inválido." });
+        }
+
+        try { return Ok(await watchTime.GetAsync(currentUser.UserId, zone, cancellationToken)); }
+        catch (Exception error) when (error is HttpRequestException || error is OperationCanceledException && !cancellationToken.IsCancellationRequested)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                new { message = "Não foi possível consultar a duração dos episódios. Tente novamente." });
+        }
+    }
+
+    [HttpGet("stats")]
+    public async Task<IActionResult> GetStats(CancellationToken cancellationToken)
+    {
+        var userId = currentUser.UserId;
+        var series = await database.UserSeries.CountAsync(x => x.UserId == userId, cancellationToken);
+        var episodes = await database.EpisodiosAssistidos.CountAsync(x => x.UserId == userId, cancellationToken);
+        var favorites = await database.UserSeries.CountAsync(x => x.UserId == userId && x.IsFavorite, cancellationToken);
+        return Ok(new { series, episodes, favorites });
+    }
+
+    [HttpPut("password")]
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        var user = await database.Users.SingleOrDefaultAsync(x => x.Id == currentUser.UserId, cancellationToken);
+        if (user is null) return Unauthorized();
+
+        if (passwordHasher.VerifyHashedPassword(user, user.PasswordHash, request.CurrentPassword) == PasswordVerificationResult.Failed)
+        {
+            return BadRequest(new { message = "Senha atual incorreta." });
+        }
+
+        if (request.CurrentPassword == request.NewPassword)
+        {
+            return BadRequest(new { message = "A nova senha deve ser diferente da senha atual." });
+        }
+
+        user.PasswordHash = passwordHasher.HashPassword(user, request.NewPassword);
+        await database.SaveChangesAsync(cancellationToken);
+        return NoContent();
+    }
+
     [HttpPatch]
     [ProducesResponseType<ProfileResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

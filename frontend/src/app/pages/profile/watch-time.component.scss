@@ -1,0 +1,41 @@
+:host { display: block; margin-top: 24px; }
+.watch-time { display: flex; align-items: center; justify-content: space-between; gap: 32px; min-height: 208px; padding: 32px; border: 1px solid rgb(139 117 255 / 35%); border-radius: 24px; background: radial-gradient(ellipse at top left, rgb(112 87 255 / 25%), transparent 42%), var(--surface); color: var(--text); }
+.watch-summary { min-width: 0; }
+h2 { margin: 0 0 20px; color: var(--accent); font-size: 12px; font-weight: 800; letter-spacing: 1.4px; text-transform: uppercase; }
+.total { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; margin: 0; }
+.time-part { display: inline-flex; align-items: baseline; gap: 8px; color: var(--muted); font-size: 26px; font-weight: 650; white-space: nowrap; }
+strong { color: var(--text-strong); font-size: 64px; font-weight: 800; line-height: 1.1; letter-spacing: -2px; }
+.accent, .accent strong { color: var(--accent); }
+.subtitle { margin: 14px 0 0; color: var(--muted); font-size: 14px; }
+.status, .runtime-note { color: var(--muted); font-size: 13px; line-height: 1.5; }
+.runtime-note { margin: 10px 0 0; font-size: 11px; }
+.retry { padding: 9px 14px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); cursor: pointer; }
+.weekly-chart { width: 294px; flex: 0 0 294px; margin: 6px 0 0; text-align: center; }
+.chart-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 14px; padding: 0; margin: 0; list-style: none; }
+.day-bar { position: relative; display: block; border-radius: 8px; outline-offset: 4px; }
+.bar-slot { display: flex; align-items: flex-end; height: 90px; }
+.bar { display: block; width: 100%; min-height: 3px; border-radius: 9px; background: rgb(139 117 255 / 27%); }
+.bar.empty { opacity: 0.55; }
+.day-label { display: block; margin-top: 9px; color: var(--muted); font-size: 11px; font-weight: 700; }
+.today .bar { background: #937aff; }
+.today .day-label { color: var(--text-strong); }
+figcaption { margin-top: 12px; color: var(--muted); font-size: 12px; }
+.chart-tooltip { position: absolute; bottom: calc(100% + 8px); left: 50%; z-index: 1; width: max-content; max-width: 200px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-soft); color: var(--text); font-size: 11px; line-height: 1.5; pointer-events: none; visibility: hidden; transform: translateX(-50%); }
+.day-bar:hover .chart-tooltip, .day-bar:focus .chart-tooltip { visibility: visible; }
+.chart-days li:last-child .chart-tooltip { left: auto; right: 0; transform: none; }
+:host-context(.dark-theme) { --surface: #131329; --surface-soft: #191931; --accent: #baacff; }
+@media (max-width: 760px) {
+  .watch-time { align-items: stretch; flex-direction: column; gap: 20px; min-height: 0; padding: 24px 20px; border-radius: 20px; }
+  .watch-summary { container-type: inline-size; }
+  h2 { margin-bottom: 16px; font-size: 11px; }
+  .total { flex-wrap: nowrap; gap: clamp(10px, 4cqi, 16px); }
+  strong { font-size: clamp(28px, 12cqi, 42px); letter-spacing: -1px; }
+  .time-part { gap: 5px; font-size: clamp(12px, 5cqi, 17px); }
+  .subtitle { margin-top: 8px; font-size: 12px; }
+  .weekly-chart { align-self: center; flex-basis: auto; width: min(320px, 100%); margin: 0; }
+  .chart-days { gap: 12px; }
+  .bar-slot { justify-content: center; height: 64px; }
+  .bar { max-width: 28px; border-radius: 7px; }
+  figcaption { margin-top: 10px; font-size: 11px; }
+  .chart-days li:first-child .chart-tooltip { left: 0; transform: none; }
+}

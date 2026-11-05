@@ -1,177 +1,105 @@
-<section class="profile-page">
-  <header class="profile-heading">
-    <p class="eyebrow">Sua conta</p>
-
-    <h1>Personalizar perfil</h1>
-
-    <p>Atualize como você aparece no SeenIt.</p>
+<section class="profile-page" aria-label="Personalizar perfil">
+  <header class="profile-summary">
+    <div class="profile-banner" aria-hidden="true"></div>
+    <div class="summary-content">
+      <div class="identity">
+        <div class="avatar-preview">
+          @if (profile()?.avatarUrl) {
+            <img [src]="profile()!.avatarUrl" [alt]="'Foto de perfil de ' + profile()!.name" />
+          } @else {
+            <span>{{ initials() }}</span>
+          }
+          <button type="button" class="avatar-edit" [disabled]="uploadingAvatar() || !profile()" (click)="avatarInput.click()" aria-label="Alterar foto de perfil" title="Enviar JPG, PNG ou WEBP de até 5 MB">
+            <i [class]="uploadingAvatar() ? 'pi pi-spin pi-spinner' : 'pi pi-camera'" aria-hidden="true"></i>
+          </button>
+        </div>
+        <input #avatarInput type="file" accept="image/png,image/jpeg,image/webp" hidden (change)="selectAvatar($event)" />
+        <div class="identity-copy">
+          <p class="eyebrow">Sua conta</p>
+          <h1>{{ profile()?.name || 'Carregando perfil…' }}</h1>
+          <p class="profile-email">{{ profile()?.email }}</p>
+          @if (profile()?.avatarUrl) {
+            <button type="button" class="remove-avatar" [disabled]="uploadingAvatar()" (click)="deleteAvatar()">Remover foto</button>
+          }
+        </div>
+      </div>
+      <dl class="profile-stats" aria-label="Atividade da conta">
+        <div><dt>Séries na lista</dt><dd>{{ stats() ? stats()!.series.toString().padStart(2, '0') : '—' }}</dd></div>
+        <div><dt>Episódios vistos</dt><dd>{{ stats() ? stats()!.episodes.toString().padStart(2, '0') : '—' }}</dd></div>
+        <div><dt>Favoritas</dt><dd>{{ stats() ? stats()!.favorites.toString().padStart(2, '0') : '—' }}</dd></div>
+      </dl>
+    </div>
   </header>
 
-  <div class="profile-card">
-    <section class="avatar-panel">
-      <div class="avatar-preview">
-        @if (profile()?.avatarUrl) {
-          <img
-            [src]="profile()!.avatarUrl"
-            [alt]="'Foto de perfil de ' + profile()!.name"
-          />
-        } @else {
-          <span>
-            {{ profile()?.name?.charAt(0)?.toUpperCase() || "U" }}
-          </span>
-        }
+  <app-watch-time />
 
-        <div class="avatar-decoration"></div>
-      </div>
-
-      <div class="avatar-information">
-        <h2>Foto de perfil</h2>
-
-        <p>Use uma imagem JPG, PNG ou WEBP com no máximo 5 MB.</p>
-      </div>
-
-      <input
-        #avatarInput
-        type="file"
-        accept="image/png,image/jpeg,image/webp"
-        hidden
-        (change)="selectAvatar($event)"
-      />
-
-      <div class="avatar-actions">
-        <button
-          type="button"
-          class="change-avatar-button"
-          [disabled]="uploadingAvatar()"
-          (click)="avatarInput.click()"
-        >
-          @if (uploadingAvatar()) {
-            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
-
-            Enviando...
-          } @else {
-            <i class="pi pi-camera" aria-hidden="true"></i>
-
-            Alterar foto
-          }
-        </button>
-
-        @if (profile()?.avatarUrl) {
-          <button
-            type="button"
-            class="remove-avatar-button"
-            [disabled]="uploadingAvatar()"
-            (click)="deleteAvatar()"
-          >
-            <i class="pi pi-trash" aria-hidden="true"></i>
-
-            Remover
-          </button>
-        }
-      </div>
-    </section>
-
-    <form class="profile-form" [formGroup]="form" (ngSubmit)="saveProfile()">
-      <div class="form-heading">
-        <span class="form-icon">
-          <i class="pi pi-user" aria-hidden="true"></i>
-        </span>
-
-        <div>
-          <h2>Informações pessoais</h2>
-
-          <p>Gerencie os dados básicos da sua conta.</p>
-        </div>
-      </div>
-
+  <form class="profile-form" [formGroup]="form" (ngSubmit)="saveProfile()">
+    <div class="section-heading">
+      <span class="section-icon"><i class="pi pi-user" aria-hidden="true"></i></span>
+      <div><h2>Informações pessoais</h2><p>Atualize seu nome e o e-mail usado para acessar a conta.</p></div>
+    </div>
+    <div class="personal-fields">
       <div class="form-field">
-        <label for="profile-name"> Nome </label>
-
-        <div
-          class="input-wrapper"
-          [class.invalid]="
-            form.controls.name.touched && form.controls.name.invalid
-          "
-        >
-          <i class="pi pi-user" aria-hidden="true"></i>
-
-          <input
-            id="profile-name"
-            type="text"
-            formControlName="name"
-            maxlength="120"
-            autocomplete="name"
-            placeholder="Digite seu nome"
-          />
-        </div>
-
+        <label for="profile-name">Nome</label>
+        <input id="profile-name" type="text" formControlName="name" maxlength="120" autocomplete="name" placeholder="Digite seu nome" [attr.aria-invalid]="form.controls.name.touched && form.controls.name.invalid" aria-describedby="name-error" />
         @if (form.controls.name.touched && form.controls.name.invalid) {
-          <span class="field-error"> Informe um nome válido. </span>
+          <span id="name-error" class="field-error">Informe um nome válido de até 120 caracteres.</span>
         }
       </div>
-
       <div class="form-field">
-        <div class="label-row">
-          <label for="profile-email"> E-mail </label>
-
-          <span class="locked-label">
-            <i class="pi pi-lock" aria-hidden="true"></i>
-
-            Não editável
-          </span>
-        </div>
-
-        <div class="input-wrapper disabled">
-          <i class="pi pi-envelope" aria-hidden="true"></i>
-
-          <input
-            id="profile-email"
-            type="email"
-            [value]="profile()?.email || ''"
-            disabled
-          />
-        </div>
-
-        <small> O e-mail é utilizado para acessar sua conta. </small>
+        <label for="profile-email">E-mail</label>
+        <input id="profile-email" type="email" [value]="profile()?.email || ''" readonly aria-describedby="email-help" />
+        <small id="email-help">O e-mail é utilizado para acessar sua conta e ainda não pode ser alterado.</small>
       </div>
+    </div>
+    <div class="password-section">
+      <div class="section-heading">
+        <span class="section-icon"><i class="pi pi-lock" aria-hidden="true"></i></span>
+        <div><h2>Senha</h2><p class="masked-password" aria-label="Senha protegida">••••••••••</p></div>
+      </div>
+      <button type="button" class="password-button" [disabled]="!profile()" (click)="openPasswordModal()">Alterar senha</button>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="secondary" [disabled]="form.pristine || savingProfile()" (click)="discardChanges()">Descartar</button>
+      <button type="submit" class="primary" [disabled]="!profile() || form.invalid || form.pristine || savingProfile()">{{ savingProfile() ? 'Salvando…' : 'Salvar alterações' }}</button>
+    </div>
+  </form>
 
-      <div class="form-footer">
-        <span class="unsaved-message">
-          @if (form.dirty) {
-            Alterações ainda não salvas
+  <section class="danger-zone" aria-labelledby="danger-title">
+    <div><h2 id="danger-title">Zona de perigo</h2><p>Excluir a conta apaga sua lista, seus episódios assistidos e favoritos. Essa ação não pode ser desfeita.</p></div>
+    <button type="button" class="danger-button" [disabled]="!profile()" (click)="openDeleteModal()">Excluir conta</button>
+  </section>
+</section>
+
+<dialog #passwordDialog class="password-modal" aria-labelledby="password-title" aria-describedby="password-description" (cancel)="$event.preventDefault(); closePasswordModal()" (click)="$event.target === passwordDialog && closePasswordModal()">
+  <div class="password-modal-content">
+    <button type="button" class="modal-close" aria-label="Fechar alteração de senha" [disabled]="changingPassword()" (click)="closePasswordModal()"><i class="pi pi-times" aria-hidden="true"></i></button>
+    <h2 id="password-title">Alterar senha</h2>
+    <p id="password-description">Escolha uma senha que você não usa em outros sites.</p>
+    <form [formGroup]="passwordForm" (ngSubmit)="changePassword()">
+      @for (field of passwordFields; track field.key) {
+        <div class="form-field">
+          <label [for]="field.key">{{ field.label }}</label>
+          <div class="password-input">
+            <input [id]="field.key" [type]="visiblePasswords()[field.key] ? 'text' : 'password'" [formControlName]="field.key" [autocomplete]="field.autocomplete" [placeholder]="field.placeholder" [attr.aria-invalid]="passwordForm.controls[field.key].touched && passwordForm.controls[field.key].invalid" [attr.aria-describedby]="field.key + '-error'" />
+            <button type="button" class="visibility-button" [attr.aria-label]="(visiblePasswords()[field.key] ? 'Ocultar ' : 'Mostrar ') + field.label.toLowerCase()" [attr.aria-pressed]="!!visiblePasswords()[field.key]" (click)="togglePassword(field.key)"><i [class]="visiblePasswords()[field.key] ? 'pi pi-eye-slash' : 'pi pi-eye'" aria-hidden="true"></i></button>
+          </div>
+          @if (passwordForm.controls[field.key].touched && passwordForm.controls[field.key].invalid) {
+            <span [id]="field.key + '-error'" class="field-error">{{ field.key === 'newPassword' ? 'Use entre 8 e 128 caracteres.' : 'Preencha este campo.' }}</span>
           }
-        </span>
-
-        <div class="form-actions">
-          <button
-            type="button"
-            class="delete-account-button"
-            (click)="openDeleteModal()"
-          >
-            <i class="pi pi-trash" aria-hidden="true"></i>
-            Excluir conta
-          </button>
-
-          <button
-            type="submit"
-            class="save-button"
-            [disabled]="form.invalid || form.pristine || savingProfile()"
-          >
-            @if (savingProfile()) {
-              <i class="pi pi-spin pi-spinner" aria-hidden="true"></i>
-              Salvando...
-            } @else {
-              <i class="pi pi-check" aria-hidden="true"></i>
-              Salvar alterações
-            }
-          </button>
+          @if (field.key === 'confirmPassword' && passwordForm.controls.confirmPassword.touched && passwordForm.hasError('mismatch')) {
+            <span class="field-error" role="alert">As senhas não coincidem.</span>
+          }
         </div>
+      }
+      @if (passwordError()) { <p class="field-error" role="alert">{{ passwordError() }}</p> }
+      <div class="modal-actions">
+        <button type="button" class="secondary" [disabled]="changingPassword()" (click)="closePasswordModal()">Cancelar</button>
+        <button type="submit" class="primary" [disabled]="changingPassword()">{{ changingPassword() ? 'Atualizando…' : 'Atualizar senha' }}</button>
       </div>
     </form>
   </div>
-
-</section>
-
+</dialog>
 @if (deleteModalOpen()) {
   <div class="delete-modal-backdrop" (click)="closeDeleteModal()">
     <section

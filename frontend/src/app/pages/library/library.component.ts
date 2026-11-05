@@ -27,19 +27,24 @@ export class LibraryComponent implements OnInit {
   private readonly notification = inject(NotificationService);
   readonly SeriesStatus = SeriesStatus;
   readonly items = signal<UserSeries[]>([]);
+  readonly sortedItems = computed(() =>
+    [...this.items()].sort((a, b) =>
+      a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }),
+    ),
+  );
   readonly loading = signal(true);
   readonly filter = signal<SeriesStatus | null>(null);
-  readonly favoriteItems = computed(() => this.items().filter((item) => item.isFavorite));
+  readonly favoriteItems = computed(() => this.sortedItems().filter((item) => item.isFavorite));
   readonly savingFavorites = signal<Set<number>>(new Set());
   readonly menuAbertoId = signal<number | null>(null);
   readonly visibleItems = computed(() => {
     const filtroAtual = this.filter();
 
     if (filtroAtual === null) {
-      return this.items();
+      return this.sortedItems();
     }
 
-    return this.items().filter((item) => item.status === filtroAtual);
+    return this.sortedItems().filter((item) => item.status === filtroAtual);
   });
 
   readonly counts = computed(() => ({
@@ -59,10 +64,32 @@ export class LibraryComponent implements OnInit {
 
   private readonly mySeriesRow = viewChild<ElementRef<HTMLElement>>('mySeriesRow');
   private readonly favoriteSeriesRow = viewChild<ElementRef<HTMLElement>>('favoriteSeriesRow');
+  private readonly seriesMenu = viewChild<ElementRef<HTMLElement>>('seriesMenu');
+  private menuTrigger: HTMLElement | null = null;
   readonly listNavigation = signal({ previous: false, next: false });
   readonly favoriteNavigation = signal({ previous: false, next: false });
 
   constructor(private readonly seriesService: SeriesService) {
+    afterRenderEffect(() => {
+      const menu = this.seriesMenu()?.nativeElement;
+      if (this.menuAbertoId() === null || !menu || !this.menuTrigger) return;
+
+      menu.showPopover();
+      const trigger = this.menuTrigger.getBoundingClientRect();
+      const viewport = window.visualViewport;
+      const leftEdge = (viewport?.offsetLeft ?? 0) + 12;
+      const topEdge = (viewport?.offsetTop ?? 0) + 12;
+      const rightEdge = leftEdge + (viewport?.width ?? window.innerWidth) - 24;
+      const bottomEdge = topEdge + (viewport?.height ?? window.innerHeight) - 24;
+      menu.style.maxHeight = `${bottomEdge - topEdge}px`;
+      const { width, height } = menu.getBoundingClientRect();
+      const below = trigger.bottom + 8;
+      const top = below + height <= bottomEdge ? below : trigger.top - height - 8;
+      menu.style.left = `${Math.max(leftEdge, Math.min(trigger.right - width, rightEdge - width))}px`;
+      menu.style.top = `${Math.max(topEdge, Math.min(top, bottomEdge - height))}px`;
+      menu.querySelector<HTMLButtonElement>('[role="menuitem"]')?.focus({ preventScroll: true });
+    });
+
     afterRenderEffect((onCleanup) => {
       this.visibleItems();
       this.favoriteItems();
@@ -126,6 +153,7 @@ export class LibraryComponent implements OnInit {
   alternarMenu(seriesId: number, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
+    this.menuTrigger = event.currentTarget as HTMLElement;
 
     this.menuAbertoId.update((idAtual) =>
       idAtual === seriesId ? null : seriesId,
@@ -222,12 +250,31 @@ export class LibraryComponent implements OnInit {
   }
 
   @HostListener("document:click")
+  @HostListener("window:scroll")
+  @HostListener("window:resize")
   fecharMenu(): void {
     this.menuAbertoId.set(null);
   }
 
   @HostListener("document:keydown.escape")
   fecharMenuComEsc(): void {
+    if (this.menuAbertoId() !== null) this.menuTrigger?.focus({ preventScroll: true });
     this.menuAbertoId.set(null);
+  }
+
+  navigateMenu(event: KeyboardEvent): void {
+    const buttons = Array.from(this.seriesMenu()?.nativeElement.querySelectorAll<HTMLButtonElement>('[role="menuitem"]') ?? []);
+    const current = buttons.indexOf(document.activeElement as HTMLButtonElement);
+    let next: number;
+    switch (event.key) {
+      case 'ArrowDown': next = (current + 1) % buttons.length; break;
+      case 'ArrowUp': next = (current - 1 + buttons.length) % buttons.length; break;
+      case 'Home': next = 0; break;
+      case 'End': next = buttons.length - 1; break;
+      case 'Tab': this.fecharMenu(); return;
+      default: return;
+    }
+    event.preventDefault();
+    buttons[next]?.focus({ preventScroll: true });
   }
 }

@@ -70,7 +70,7 @@
     <button [hidden]="!listNavigation().previous" type="button" class="carousel-arrow previous" aria-label="Ver séries anteriores da minha lista" (click)="scrollSeries(mySeriesRow, -1)">
       <i class="pi pi-chevron-left" aria-hidden="true"></i>
     </button>
-  <div #mySeriesRow class="series-grid" tabindex="0" role="region" aria-label="Séries da minha lista, rolagem horizontal">
+  <div #mySeriesRow class="series-grid" tabindex="0" role="region" aria-label="Séries da minha lista, rolagem horizontal" (scroll)="fecharMenu()">
     @for (item of visibleItems(); track item.id) {
       <article
         class="series-card"
@@ -117,10 +117,13 @@
 
             @if (menuAbertoId() === item.externalSeriesId) {
               <div
+                #seriesMenu
                 class="series-menu"
+                popover="manual"
                 role="menu"
                 [attr.aria-label]="'Opções de ' + item.name"
                 (click)="$event.stopPropagation()"
+                (keydown)="navigateMenu($event)"
               >
                 <span class="menu-title"> Alterar status </span>
 
