@@ -127,6 +127,9 @@ namespace SeenIt.Api.Migrations
                     b.Property<int>("ExternalSeriesId")
                         .HasColumnType("integer");
 
+                    b.Property<bool>("IsFavorite")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(240)

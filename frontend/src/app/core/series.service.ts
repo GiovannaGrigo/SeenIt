@@ -37,4 +37,8 @@ export class SeriesService {
   remove(externalSeriesId: number) {
     return this.http.delete<void>(`${this.apiUrl}/my-series/${externalSeriesId}`);
   }
+
+  updateFavorite(externalSeriesId: number, isFavorite: boolean) {
+    return this.http.put<UserSeries>(`${this.apiUrl}/my-series/${externalSeriesId}/favorite`, { isFavorite });
+  }
 }

@@ -66,7 +66,11 @@
     </a>
   </section>
 } @else {
-  <div class="series-grid">
+  <div class="series-carousel">
+    <button [hidden]="!listNavigation().previous" type="button" class="carousel-arrow previous" aria-label="Ver séries anteriores da minha lista" (click)="scrollSeries(mySeriesRow, -1)">
+      <i class="pi pi-chevron-left" aria-hidden="true"></i>
+    </button>
+  <div #mySeriesRow class="series-grid" tabindex="0" role="region" aria-label="Séries da minha lista, rolagem horizontal">
     @for (item of visibleItems(); track item.id) {
       <article
         class="series-card"
@@ -84,6 +88,19 @@
               {{ statusLabel(item.status) }}
             </span>
           </a>
+
+          <button
+            type="button"
+            class="favorite-trigger"
+            [class.is-favorite]="item.isFavorite"
+            [attr.aria-pressed]="item.isFavorite"
+            [attr.aria-label]="(item.isFavorite ? 'Remover dos favoritos: ' : 'Adicionar aos favoritos: ') + item.name"
+            [title]="item.isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
+            [disabled]="savingFavorites().has(item.externalSeriesId)"
+            (click)="toggleFavorite(item, $event)"
+          >
+            <i [class]="item.isFavorite ? 'pi pi-heart-fill' : 'pi pi-heart'" aria-hidden="true"></i>
+          </button>
 
           <div class="series-menu-container">
             <button
@@ -177,4 +194,70 @@
       </article>
     }
   </div>
+    <button [hidden]="!listNavigation().next" type="button" class="carousel-arrow next" aria-label="Ver próximas séries da minha lista" (click)="scrollSeries(mySeriesRow, 1)">
+      <i class="pi pi-chevron-right" aria-hidden="true"></i>
+    </button>
+  </div>
+}
+
+@if (!loading()) {
+  <section class="favorites-section" aria-labelledby="favorites-heading">
+    <h2 id="favorites-heading" class="section-heading">
+      Séries Favoritas
+      <span class="favorites-count">
+        {{ favoriteItems().length }} {{ favoriteItems().length === 1 ? 'série' : 'séries' }}
+      </span>
+    </h2>
+
+    @if (favoriteItems().length) {
+      <div class="series-carousel">
+        <button [hidden]="!favoriteNavigation().previous" type="button" class="carousel-arrow previous" aria-label="Ver séries favoritas anteriores" (click)="scrollSeries(favoriteSeriesRow, -1)">
+          <i class="pi pi-chevron-left" aria-hidden="true"></i>
+        </button>
+      <div #favoriteSeriesRow class="series-grid" tabindex="0" role="region" aria-label="Séries favoritas, rolagem horizontal">
+        @for (item of favoriteItems(); track item.id) {
+          <article class="series-card">
+            <div class="poster-wrapper">
+              <a class="poster" [routerLink]="['/serie', item.externalSeriesId]">
+                @if (item.posterUrl) {
+                  <img [src]="item.posterUrl" [alt]="'Pôster de ' + item.name" />
+                } @else {
+                  <span>SeenIt</span>
+                }
+                <span class="status-badge status-{{ item.status }}">
+                  {{ statusLabel(item.status) }}
+                </span>
+              </a>
+              <button
+                type="button"
+                class="favorite-trigger is-favorite"
+                aria-pressed="true"
+                [attr.aria-label]="'Remover dos favoritos: ' + item.name"
+                title="Remover dos favoritos"
+                [disabled]="savingFavorites().has(item.externalSeriesId)"
+                (click)="toggleFavorite(item, $event)"
+              >
+                <i class="pi pi-heart-fill" aria-hidden="true"></i>
+              </button>
+            </div>
+            <div class="card-body">
+              <a [routerLink]="['/serie', item.externalSeriesId]">
+                <h3>{{ item.name }}</h3>
+              </a>
+            </div>
+          </article>
+        }
+      </div>
+        <button [hidden]="!favoriteNavigation().next" type="button" class="carousel-arrow next" aria-label="Ver próximas séries favoritas" (click)="scrollSeries(favoriteSeriesRow, 1)">
+          <i class="pi pi-chevron-right" aria-hidden="true"></i>
+        </button>
+      </div>
+    } @else {
+      <div class="empty-state favorites-empty">
+        <i class="pi pi-heart" aria-hidden="true"></i>
+        <h3>Nenhuma série favorita ainda</h3>
+        <p>Toque no coração de uma série da sua lista para adicioná-la aos favoritos.</p>
+      </div>
+    }
+  </section>
 }

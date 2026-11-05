@@ -220,7 +220,7 @@ mySeries.MapGet("/", async (
 
     var items = await query.OrderByDescending(x => x.UpdatedAtUtc)
         .Select(x => new UserSeriesResponse(x.Id, x.ExternalSeriesId, x.Name, x.PosterUrl,
-            x.Summary, x.Status, x.AddedAtUtc, x.UpdatedAtUtc))
+            x.Summary, x.Status, x.AddedAtUtc, x.UpdatedAtUtc, x.IsFavorite))
         .ToListAsync(cancellationToken);
     return Results.Ok(items);
 });
@@ -295,6 +295,24 @@ mySeries.MapPut("/{externalSeriesId:int}/status", async (
     return Results.Ok(ToResponse(item));
 });
 
+mySeries.MapPut("/{externalSeriesId:int}/favorite", async (
+    int externalSeriesId,
+    UpdateSeriesFavoriteRequest request,
+    CurrentUserService currentUser,
+    AppDbContext database,
+    CancellationToken cancellationToken) =>
+{
+    var item = await database.UserSeries.SingleOrDefaultAsync(
+        x => x.UserId == currentUser.UserId && x.ExternalSeriesId == externalSeriesId,
+        cancellationToken);
+    if (item is null) return Results.NotFound();
+
+    item.IsFavorite = request.IsFavorite;
+    item.UpdatedAtUtc = DateTime.UtcNow;
+    await database.SaveChangesAsync(cancellationToken);
+    return Results.Ok(ToResponse(item));
+});
+
 mySeries.MapDelete("/{externalSeriesId:int}", async (
     int externalSeriesId,
     CurrentUserService currentUser,
@@ -315,4 +333,4 @@ app.Run();
 
 static UserSeriesResponse ToResponse(UserSeries x) => new(
     x.Id, x.ExternalSeriesId, x.Name, x.PosterUrl, x.Summary,
-    x.Status, x.AddedAtUtc, x.UpdatedAtUtc);
+    x.Status, x.AddedAtUtc, x.UpdatedAtUtc, x.IsFavorite);

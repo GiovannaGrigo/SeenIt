@@ -9,6 +9,7 @@ public sealed class UserSeries
     public string? PosterUrl { get; set; }
     public string? Summary { get; set; }
     public SeriesStatus Status { get; set; } = SeriesStatus.InList;
+    public bool IsFavorite { get; set; }
     public DateTime AddedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
     public User User { get; set; } = null!;

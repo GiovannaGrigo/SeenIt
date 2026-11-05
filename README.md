@@ -33,6 +33,8 @@ A aplicação permite pesquisar séries utilizando os dados da TVmaze, visualiza
   - Finalizada
 - Alterar o status de uma série.
 - Remover uma série da lista.
+- Adicionar e remover séries dos favoritos, independentemente do status.
+- Consultar as séries favoritas na seção “Séries Favoritas”, abaixo da lista principal e independente dos filtros de status.
 
 ## Estrutura do projeto
 
@@ -53,6 +55,7 @@ As requisições para a TVmaze são feitas pelo backend. Dessa forma, o frontend
 ```bash
 cd backend/SeenIt.Api
 dotnet restore
+dotnet ef database update
 dotnet run --urls "https://localhost:7042;http://localhost:5042"
 ```
 
@@ -88,4 +91,5 @@ Crie uma conta, faça login e pesquise uma série para adicioná-la à sua lista
 | GET | `/api/my-series` | Sim | Retorna a lista do usuário |
 | POST | `/api/my-series` | Sim | Adiciona ou atualiza uma série na lista |
 | PUT | `/api/my-series/{id}/status` | Sim | Altera o status da série |
+| PUT | `/api/my-series/{id}/favorite` | Sim | Define se a série é favorita com `{ "isFavorite": true/false }` |
 | DELETE | `/api/my-series/{id}` | Sim | Remove a série da lista |

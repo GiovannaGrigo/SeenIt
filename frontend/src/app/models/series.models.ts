@@ -39,6 +39,7 @@ export interface UserSeries {
   posterUrl?: string;
   summary?: string;
   status: SeriesStatus;
+  isFavorite: boolean;
   addedAtUtc: string;
   updatedAtUtc: string;
 }

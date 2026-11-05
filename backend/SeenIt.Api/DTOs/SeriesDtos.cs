@@ -44,6 +44,7 @@ public sealed record AddSeriesRequest(
     SeriesStatus Status);
 
 public sealed record UpdateSeriesStatusRequest(SeriesStatus Status);
+public sealed record UpdateSeriesFavoriteRequest(bool IsFavorite);
 
 public sealed record UserSeriesResponse(
     Guid Id,
@@ -53,4 +54,5 @@ public sealed record UserSeriesResponse(
     string? Summary,
     SeriesStatus Status,
     DateTime AddedAtUtc,
-    DateTime UpdatedAtUtc);
+    DateTime UpdatedAtUtc,
+    bool IsFavorite);
