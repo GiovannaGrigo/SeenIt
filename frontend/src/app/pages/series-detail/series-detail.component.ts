@@ -117,6 +117,10 @@ export class SeriesDetailComponent implements OnInit {
         this.savedStatus.set(status);
         this.statusControl.reset();
 
+        if (status === SeriesStatus.Finished) {
+          this.carregarEpisodiosAssistidos(series.id);
+        }
+
         if (jaEstavaNaLista) {
           this.notification.success(
             `Status alterado para "${this.label(status)}".`,
@@ -132,6 +136,7 @@ export class SeriesDetailComponent implements OnInit {
 
       error: (error) => {
         console.error("Erro ao atualizar status:", error);
+        this.notification.error("Não foi possível atualizar o status. Tente novamente.");
       },
     });
   }

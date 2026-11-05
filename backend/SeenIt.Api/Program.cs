@@ -229,6 +229,7 @@ mySeries.MapPost("/", async (
     AddSeriesRequest request,
     CurrentUserService currentUser,
     AppDbContext database,
+    IEpisodioAssistidoService episodioAssistidoService,
     CancellationToken cancellationToken) =>
 {
     if (!Enum.IsDefined(request.Status) || request.ExternalSeriesId <= 0 || string.IsNullOrWhiteSpace(request.Name))
@@ -240,6 +241,10 @@ mySeries.MapPost("/", async (
 
     if (existing is not null)
     {
+        if (request.Status == SeriesStatus.Finished)
+            await episodioAssistidoService.MarcarTodosComoAssistidosAsync(
+                currentUser.UserId, request.ExternalSeriesId, cancellationToken);
+
         existing.Status = request.Status;
         existing.UpdatedAtUtc = DateTime.UtcNow;
         await database.SaveChangesAsync(cancellationToken);
@@ -256,6 +261,10 @@ mySeries.MapPost("/", async (
         Status = request.Status
     };
     database.UserSeries.Add(item);
+    if (request.Status == SeriesStatus.Finished)
+        await episodioAssistidoService.MarcarTodosComoAssistidosAsync(
+            currentUser.UserId, request.ExternalSeriesId, cancellationToken);
+
     await database.SaveChangesAsync(cancellationToken);
     return Results.Created($"/api/my-series/{item.ExternalSeriesId}", ToResponse(item));
 });
@@ -265,6 +274,7 @@ mySeries.MapPut("/{externalSeriesId:int}/status", async (
     UpdateSeriesStatusRequest request,
     CurrentUserService currentUser,
     AppDbContext database,
+    IEpisodioAssistidoService episodioAssistidoService,
     CancellationToken cancellationToken) =>
 {
     if (!Enum.IsDefined(request.Status))
@@ -274,6 +284,10 @@ mySeries.MapPut("/{externalSeriesId:int}/status", async (
         x => x.UserId == currentUser.UserId && x.ExternalSeriesId == externalSeriesId,
         cancellationToken);
     if (item is null) return Results.NotFound();
+
+    if (request.Status == SeriesStatus.Finished)
+        await episodioAssistidoService.MarcarTodosComoAssistidosAsync(
+            currentUser.UserId, externalSeriesId, cancellationToken);
 
     item.Status = request.Status;
     item.UpdatedAtUtc = DateTime.UtcNow;

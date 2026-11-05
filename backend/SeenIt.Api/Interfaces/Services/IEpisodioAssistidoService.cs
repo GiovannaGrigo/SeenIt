@@ -4,6 +4,11 @@ namespace SeenIt.Api.Interfaces.Services;
 
 public interface IEpisodioAssistidoService
 {
+    Task MarcarTodosComoAssistidosAsync(
+        Guid userId,
+        int externalSeriesId,
+        CancellationToken cancellationToken);
+
     Task<EpisodioAssistidoResponse> MarcarComoAssistidoAsync(
         Guid userId,
         int externalEpisodeId,

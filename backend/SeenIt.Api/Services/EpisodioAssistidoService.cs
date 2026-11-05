@@ -9,6 +9,31 @@ namespace SeenIt.Api.Services;
 
 public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClient tvMazeClient) : IEpisodioAssistidoService
 {
+    public async Task MarcarTodosComoAssistidosAsync(Guid userId, int externalSeriesId, CancellationToken cancellationToken)
+    {
+        var episodios = await tvMazeClient.GetEpisodesAsync(externalSeriesId, cancellationToken);
+        var idsAssistidos = (await dbContext.EpisodiosAssistidos
+            .Where(x => x.UserId == userId && x.ExternalSeriesId == externalSeriesId)
+            .Select(x => x.ExternalEpisodeId)
+            .ToListAsync(cancellationToken)).ToHashSet();
+
+        foreach (var episodio in episodios)
+        {
+            if (!idsAssistidos.Add(episodio.Id))
+                continue;
+
+            dbContext.EpisodiosAssistidos.Add(new EpisodioAssistido
+            {
+                UserId = userId,
+                ExternalSeriesId = externalSeriesId,
+                ExternalEpisodeId = episodio.Id,
+                Temporada = episodio.Season,
+                NumeroEpisodio = episodio.Number,
+                NomeEpisodio = episodio.Name
+            });
+        }
+    }
+
     public async Task<EpisodioAssistidoResponse> MarcarComoAssistidoAsync(
         Guid userId,
         int externalEpisodeId,
