@@ -36,6 +36,7 @@ A aplicação permite pesquisar séries utilizando os dados da TVmaze, visualiza
 - Adicionar e remover séries dos favoritos, independentemente do status.
 - Consultar as séries favoritas na seção “Séries Favoritas”, abaixo da lista principal e independente dos filtros de status.
 - Consultar animes em uma seção própria abaixo de “Séries Favoritas”, com os mesmos cards e ações. Os filtros de status e seus totais abrangem séries e animes; os animes não aparecem nas duas seções de séries.
+- Consultar “Animes Favoritos” abaixo de “Animes”, independentemente dos filtros de status, e remover favoritos pelo coração do card.
 
 Os títulos são classificados pelo gênero `Anime` da TVmaze. A classificação fica salva na lista; títulos antigos são classificados automaticamente ao carregar a coleção. Se a TVmaze estiver indisponível, a lista continua acessível e a classificação pendente é tentada no próximo carregamento.
 

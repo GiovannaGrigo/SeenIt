@@ -97,36 +97,7 @@
         </button>
       <div #favoriteSeriesRow class="series-grid" tabindex="0" role="region" aria-label="Séries favoritas, rolagem horizontal">
         @for (item of favoriteItems(); track item.id) {
-          <article class="series-card">
-            <div class="poster-wrapper">
-              <a class="poster" [routerLink]="['/serie', item.externalSeriesId]">
-                @if (item.posterUrl) {
-                  <img [src]="item.posterUrl" [alt]="'Pôster de ' + item.name" />
-                } @else {
-                  <span>SeenIt</span>
-                }
-                <span class="status-badge status-{{ item.status }}">
-                  {{ statusLabel(item.status) }}
-                </span>
-              </a>
-              <button
-                type="button"
-                class="favorite-trigger is-favorite"
-                aria-pressed="true"
-                [attr.aria-label]="'Remover dos favoritos: ' + item.name"
-                title="Remover dos favoritos"
-                [disabled]="savingFavorites().has(item.externalSeriesId)"
-                (click)="toggleFavorite(item, $event)"
-              >
-                <i class="pi pi-heart-fill" aria-hidden="true"></i>
-              </button>
-            </div>
-            <div class="card-body">
-              <a [routerLink]="['/serie', item.externalSeriesId]">
-                <h3>{{ item.name }}</h3>
-              </a>
-            </div>
-          </article>
+          <ng-container *ngTemplateOutlet="favoriteCard; context: { $implicit: item }"></ng-container>
         }
       </div>
         <button [hidden]="!favoriteNavigation().next" type="button" class="carousel-arrow next" aria-label="Ver próximas séries favoritas" (click)="scrollSeries(favoriteSeriesRow, 1)">
@@ -174,6 +145,39 @@
         <a class="primary-link" routerLink="/explorar">
           <i class="pi pi-search" aria-hidden="true"></i> Explorar catálogo
         </a>
+      </div>
+    }
+  </section>
+}
+
+@if (!loading()) {
+  <section class="favorites-section" aria-labelledby="favorite-anime-heading">
+    <h2 id="favorite-anime-heading" class="section-heading">
+      Animes Favoritos
+      <span class="favorites-count">
+        {{ favoriteAnimeItems().length }} {{ favoriteAnimeItems().length === 1 ? 'anime' : 'animes' }}
+      </span>
+    </h2>
+
+    @if (favoriteAnimeItems().length) {
+      <div class="series-carousel">
+        <button [hidden]="!favoriteAnimeNavigation().previous" type="button" class="carousel-arrow previous" aria-label="Ver animes favoritos anteriores" (click)="scrollSeries(favoriteAnimeRow, -1)">
+          <i class="pi pi-chevron-left" aria-hidden="true"></i>
+        </button>
+        <div #favoriteAnimeRow class="series-grid" tabindex="0" role="region" aria-label="Animes favoritos, rolagem horizontal">
+          @for (item of favoriteAnimeItems(); track item.id) {
+            <ng-container *ngTemplateOutlet="favoriteCard; context: { $implicit: item }"></ng-container>
+          }
+        </div>
+        <button [hidden]="!favoriteAnimeNavigation().next" type="button" class="carousel-arrow next" aria-label="Ver próximos animes favoritos" (click)="scrollSeries(favoriteAnimeRow, 1)">
+          <i class="pi pi-chevron-right" aria-hidden="true"></i>
+        </button>
+      </div>
+    } @else {
+      <div class="empty-state favorites-empty">
+        <i class="pi pi-heart" aria-hidden="true"></i>
+        <h3>Nenhum anime favorito ainda</h3>
+        <p>Toque no coração de um anime da sua lista para adicioná-lo aos favoritos.</p>
       </div>
     }
   </section>
@@ -300,6 +304,39 @@
     <div class="card-body">
       <a [routerLink]="['/serie', item.externalSeriesId]">
         <h2>{{ item.name }}</h2>
+      </a>
+    </div>
+  </article>
+</ng-template>
+
+<ng-template #favoriteCard let-item>
+  <article class="series-card">
+    <div class="poster-wrapper">
+      <a class="poster" [routerLink]="['/serie', item.externalSeriesId]">
+        @if (item.posterUrl) {
+          <img [src]="item.posterUrl" [alt]="'Pôster de ' + item.name" />
+        } @else {
+          <span>SeenIt</span>
+        }
+        <span class="status-badge status-{{ item.status }}">
+          {{ statusLabel(item.status) }}
+        </span>
+      </a>
+      <button
+        type="button"
+        class="favorite-trigger is-favorite"
+        aria-pressed="true"
+        [attr.aria-label]="'Remover dos favoritos: ' + item.name"
+        title="Remover dos favoritos"
+        [disabled]="savingFavorites().has(item.externalSeriesId)"
+        (click)="toggleFavorite(item, $event)"
+      >
+        <i class="pi pi-heart-fill" aria-hidden="true"></i>
+      </button>
+    </div>
+    <div class="card-body">
+      <a [routerLink]="['/serie', item.externalSeriesId]">
+        <h3>{{ item.name }}</h3>
       </a>
     </div>
   </article>

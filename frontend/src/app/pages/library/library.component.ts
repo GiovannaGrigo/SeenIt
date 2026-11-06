@@ -38,6 +38,7 @@ export class LibraryComponent implements OnInit {
   readonly seriesItems = computed(() => this.sortedItems().filter((item) => !item.isAnime));
   readonly animeItems = computed(() => this.sortedItems().filter((item) => item.isAnime));
   readonly favoriteItems = computed(() => this.seriesItems().filter((item) => item.isFavorite));
+  readonly favoriteAnimeItems = computed(() => this.animeItems().filter((item) => item.isFavorite));
   readonly savingFavorites = signal<Set<number>>(new Set());
   readonly menuAbertoId = signal<number | null>(null);
   readonly visibleItems = computed(() => {
@@ -71,11 +72,13 @@ export class LibraryComponent implements OnInit {
   private readonly mySeriesRow = viewChild<ElementRef<HTMLElement>>('mySeriesRow');
   private readonly favoriteSeriesRow = viewChild<ElementRef<HTMLElement>>('favoriteSeriesRow');
   private readonly animeRow = viewChild<ElementRef<HTMLElement>>('animeRow');
+  private readonly favoriteAnimeRow = viewChild<ElementRef<HTMLElement>>('favoriteAnimeRow');
   private readonly seriesMenu = viewChild<ElementRef<HTMLElement>>('seriesMenu');
   private menuTrigger: HTMLElement | null = null;
   readonly listNavigation = signal({ previous: false, next: false });
   readonly favoriteNavigation = signal({ previous: false, next: false });
   readonly animeNavigation = signal({ previous: false, next: false });
+  readonly favoriteAnimeNavigation = signal({ previous: false, next: false });
 
   constructor(private readonly seriesService: SeriesService) {
     afterRenderEffect(() => {
@@ -102,10 +105,12 @@ export class LibraryComponent implements OnInit {
       this.visibleItems();
       this.favoriteItems();
       this.visibleAnimeItems();
+      this.favoriteAnimeItems();
       const rows = [
         { element: this.mySeriesRow()?.nativeElement, state: this.listNavigation },
         { element: this.favoriteSeriesRow()?.nativeElement, state: this.favoriteNavigation },
         { element: this.animeRow()?.nativeElement, state: this.animeNavigation },
+        { element: this.favoriteAnimeRow()?.nativeElement, state: this.favoriteAnimeNavigation },
       ];
       const update = () => {
         for (const { element, state } of rows) {
