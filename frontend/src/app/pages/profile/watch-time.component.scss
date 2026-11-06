@@ -23,6 +23,10 @@ figcaption { margin-top: 12px; color: var(--muted); font-size: 12px; }
 .chart-tooltip { position: absolute; bottom: calc(100% + 8px); left: 50%; z-index: 1; width: max-content; max-width: 200px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-soft); color: var(--text); font-size: 11px; line-height: 1.5; pointer-events: none; visibility: hidden; transform: translateX(-50%); }
 .day-bar:hover .chart-tooltip, .day-bar:focus .chart-tooltip { visibility: visible; }
 .chart-days li:last-child .chart-tooltip { left: auto; right: 0; transform: none; }
+:host-context(html:not(.dark-theme)) .watch-time { border-color: #d8d0ff; background: radial-gradient(ellipse at top left, rgb(112 87 255 / 10%), transparent 48%), #fff; box-shadow: 0 12px 30px rgb(34 27 88 / 6%); }
+:host-context(html:not(.dark-theme)) .bar { background: #d5ccff; }
+:host-context(html:not(.dark-theme)) .today .bar { background: #755cf4; }
+:host-context(html:not(.dark-theme)) .today .day-label { color: #4937bb; }
 :host-context(.dark-theme) { --surface: #131329; --surface-soft: #191931; --accent: #baacff; }
 @media (max-width: 760px) {
   .watch-time { align-items: stretch; flex-direction: column; gap: 20px; min-height: 0; padding: 24px 20px; border-radius: 20px; }

@@ -55,6 +55,10 @@ button:disabled { cursor: not-allowed; opacity: 0.55; }
 .password-input input { padding-right: 50px; }
 .visibility-button { position: absolute; inset: 4px 5px 4px auto; width: 40px; padding: 0; border: 0; border-radius: 10px; background: transparent; color: var(--muted); cursor: pointer; }
 .modal-actions { margin-top: 10px; }
+:host-context(html:not(.dark-theme)) .profile-summary { box-shadow: 0 12px 30px rgb(34 27 88 / 7%); }
+:host-context(html:not(.dark-theme)) .profile-banner { background: radial-gradient(ellipse at 20% 0, rgb(116 91 255 / 24%), transparent 58%), linear-gradient(110deg, #f0edff, #e8e6fa); }
+:host-context(html:not(.dark-theme)) .eyebrow { color: #5b46d6; }
+:host-context(html:not(.dark-theme)) .profile-stats > div { background: #f7f6ff; border-color: rgb(73 62 145 / 13%); }
 :host-context(.dark-theme) { --surface: #131329; --surface-soft: #191931; --input-background: #191931; --border: #28283f; }
 @media (max-width: 1050px) {
   .summary-content { flex-wrap: wrap; }
