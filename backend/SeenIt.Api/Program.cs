@@ -215,22 +215,26 @@ mySeries.MapGet("/", async (
     SeriesStatus? status,
     CurrentUserService currentUser,
     AppDbContext database,
+    TvMazeClient client,
     CancellationToken cancellationToken) =>
 {
-    var query = database.UserSeries.AsNoTracking().Where(x => x.UserId == currentUser.UserId);
+    var query = database.UserSeries.Where(x => x.UserId == currentUser.UserId);
     if (status.HasValue) query = query.Where(x => x.Status == status.Value);
 
     var items = await query.OrderByDescending(x => x.UpdatedAtUtc)
-        .Select(x => new UserSeriesResponse(x.Id, x.ExternalSeriesId, x.Name, x.PosterUrl,
-            x.Summary, x.Status, x.AddedAtUtc, x.UpdatedAtUtc, x.IsFavorite))
         .ToListAsync(cancellationToken);
-    return Results.Ok(items);
+    foreach (var item in items.Where(x => x.IsAnime is null))
+        item.IsAnime = await client.IsAnimeAsync(item.ExternalSeriesId, cancellationToken);
+    if (database.ChangeTracker.HasChanges())
+        await database.SaveChangesAsync(cancellationToken);
+    return Results.Ok(items.Select(ToResponse));
 });
 
 mySeries.MapPost("/", async (
     AddSeriesRequest request,
     CurrentUserService currentUser,
     AppDbContext database,
+    TvMazeClient client,
     IEpisodioAssistidoService episodioAssistidoService,
     CancellationToken cancellationToken) =>
 {
@@ -248,6 +252,7 @@ mySeries.MapPost("/", async (
                 currentUser.UserId, request.ExternalSeriesId, cancellationToken);
 
         existing.Status = request.Status;
+        existing.IsAnime ??= await client.IsAnimeAsync(request.ExternalSeriesId, cancellationToken);
         existing.UpdatedAtUtc = DateTime.UtcNow;
         await database.SaveChangesAsync(cancellationToken);
         return Results.Ok(ToResponse(existing));
@@ -260,7 +265,8 @@ mySeries.MapPost("/", async (
         Name = request.Name.Trim(),
         PosterUrl = request.PosterUrl,
         Summary = request.Summary,
-        Status = request.Status
+        Status = request.Status,
+        IsAnime = await client.IsAnimeAsync(request.ExternalSeriesId, cancellationToken)
     };
     database.UserSeries.Add(item);
     if (request.Status == SeriesStatus.Finished)
@@ -335,4 +341,4 @@ app.Run();
 
 static UserSeriesResponse ToResponse(UserSeries x) => new(
     x.Id, x.ExternalSeriesId, x.Name, x.PosterUrl, x.Summary,
-    x.Status, x.AddedAtUtc, x.UpdatedAtUtc, x.IsFavorite);
+    x.Status, x.AddedAtUtc, x.UpdatedAtUtc, x.IsFavorite, x.IsAnime);

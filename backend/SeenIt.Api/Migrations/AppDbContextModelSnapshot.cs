@@ -127,6 +127,9 @@ namespace SeenIt.Api.Migrations
                     b.Property<int>("ExternalSeriesId")
                         .HasColumnType("integer");
 
+                    b.Property<bool?>("IsAnime")
+                        .HasColumnType("boolean");
+
                     b.Property<bool>("IsFavorite")
                         .HasColumnType("boolean");
 

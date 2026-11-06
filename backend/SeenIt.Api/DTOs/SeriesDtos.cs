@@ -55,4 +55,5 @@ public sealed record UserSeriesResponse(
     SeriesStatus Status,
     DateTime AddedAtUtc,
     DateTime UpdatedAtUtc,
-    bool IsFavorite);
+    bool IsFavorite,
+    bool? IsAnime);

@@ -1,11 +1,34 @@
 using System.Net;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Caching.Memory;
 using SeenIt.Api.DTOs;
 
 namespace SeenIt.Api.External;
 
-public sealed partial class TvMazeClient(HttpClient httpClient)
+public sealed partial class TvMazeClient(HttpClient httpClient, IMemoryCache cache, ILogger<TvMazeClient> logger)
 {
+    public async Task<bool?> IsAnimeAsync(int id, CancellationToken cancellationToken)
+    {
+        var key = $"tvmaze:anime:{id}";
+        if (cache.TryGetValue<bool>(key, out var cached)) return cached;
+
+        try
+        {
+            var show = await GetByIdAsync(id, cancellationToken);
+            if (show is null) return null;
+            var isAnime = show.Genres.Contains("Anime", StringComparer.OrdinalIgnoreCase);
+            cache.Set(key, isAnime, TimeSpan.FromHours(24));
+            return isAnime;
+        }
+        catch (Exception error) when (error is HttpRequestException ||
+            (error is OperationCanceledException && !cancellationToken.IsCancellationRequested))
+        {
+            // Keep unknown titles eligible for classification on the next load.
+            logger.LogWarning(error, "Could not classify TVmaze show {SeriesId}", id);
+            return null;
+        }
+    }
+
     public async Task<IReadOnlyCollection<SeriesSummaryResponse>> SearchAsync(
         string query,
         CancellationToken cancellationToken)

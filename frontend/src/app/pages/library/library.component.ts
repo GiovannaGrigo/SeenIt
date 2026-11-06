@@ -11,6 +11,7 @@ import {
 } from "@angular/core";
 
 import { RouterLink } from "@angular/router";
+import { NgTemplateOutlet } from "@angular/common";
 import { finalize } from "rxjs";
 
 import { SeriesService } from "../../core/series.service";
@@ -19,7 +20,7 @@ import { NotificationService } from "../../core/notification.service";
 
 @Component({
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, NgTemplateOutlet],
   templateUrl: "./library.component.html",
   styleUrl: "./library.component.scss",
 })
@@ -34,18 +35,23 @@ export class LibraryComponent implements OnInit {
   );
   readonly loading = signal(true);
   readonly filter = signal<SeriesStatus | null>(null);
-  readonly favoriteItems = computed(() => this.sortedItems().filter((item) => item.isFavorite));
+  readonly seriesItems = computed(() => this.sortedItems().filter((item) => !item.isAnime));
+  readonly animeItems = computed(() => this.sortedItems().filter((item) => item.isAnime));
+  readonly favoriteItems = computed(() => this.seriesItems().filter((item) => item.isFavorite));
   readonly savingFavorites = signal<Set<number>>(new Set());
   readonly menuAbertoId = signal<number | null>(null);
   readonly visibleItems = computed(() => {
     const filtroAtual = this.filter();
 
     if (filtroAtual === null) {
-      return this.sortedItems();
+      return this.seriesItems();
     }
 
-    return this.sortedItems().filter((item) => item.status === filtroAtual);
+    return this.seriesItems().filter((item) => item.status === filtroAtual);
   });
+  readonly visibleAnimeItems = computed(() => this.animeItems().filter(
+    (item) => this.filter() === null || item.status === this.filter(),
+  ));
 
   readonly counts = computed(() => ({
     all: this.items().length,
@@ -64,10 +70,12 @@ export class LibraryComponent implements OnInit {
 
   private readonly mySeriesRow = viewChild<ElementRef<HTMLElement>>('mySeriesRow');
   private readonly favoriteSeriesRow = viewChild<ElementRef<HTMLElement>>('favoriteSeriesRow');
+  private readonly animeRow = viewChild<ElementRef<HTMLElement>>('animeRow');
   private readonly seriesMenu = viewChild<ElementRef<HTMLElement>>('seriesMenu');
   private menuTrigger: HTMLElement | null = null;
   readonly listNavigation = signal({ previous: false, next: false });
   readonly favoriteNavigation = signal({ previous: false, next: false });
+  readonly animeNavigation = signal({ previous: false, next: false });
 
   constructor(private readonly seriesService: SeriesService) {
     afterRenderEffect(() => {
@@ -93,9 +101,11 @@ export class LibraryComponent implements OnInit {
     afterRenderEffect((onCleanup) => {
       this.visibleItems();
       this.favoriteItems();
+      this.visibleAnimeItems();
       const rows = [
         { element: this.mySeriesRow()?.nativeElement, state: this.listNavigation },
         { element: this.favoriteSeriesRow()?.nativeElement, state: this.favoriteNavigation },
+        { element: this.animeRow()?.nativeElement, state: this.animeNavigation },
       ];
       const update = () => {
         for (const { element, state } of rows) {

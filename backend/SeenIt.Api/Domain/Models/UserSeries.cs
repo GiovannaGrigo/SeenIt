@@ -10,6 +10,7 @@ public sealed class UserSeries
     public string? Summary { get; set; }
     public SeriesStatus Status { get; set; } = SeriesStatus.InList;
     public bool IsFavorite { get; set; }
+    public bool? IsAnime { get; set; }
     public DateTime AddedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
     public User User { get; set; } = null!;

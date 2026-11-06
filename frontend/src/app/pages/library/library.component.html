@@ -9,7 +9,7 @@
   </a>
 </section>
 
-<div class="filters" role="group" aria-label="Filtrar séries">
+<div class="filters" role="group" aria-label="Filtrar séries e animes">
   <button
     type="button"
     [class.active]="filter() === null"
@@ -72,129 +72,7 @@
     </button>
   <div #mySeriesRow class="series-grid" tabindex="0" role="region" aria-label="Séries da minha lista, rolagem horizontal" (scroll)="fecharMenu()">
     @for (item of visibleItems(); track item.id) {
-      <article
-        class="series-card"
-        [class.menu-open]="menuAbertoId() === item.externalSeriesId"
-      >
-        <div class="poster-wrapper">
-          <a class="poster" [routerLink]="['/serie', item.externalSeriesId]">
-            @if (item.posterUrl) {
-              <img [src]="item.posterUrl" [alt]="'Pôster de ' + item.name" />
-            } @else {
-              <span>SeenIt</span>
-            }
-
-            <span class="status-badge status-{{ item.status }}">
-              {{ statusLabel(item.status) }}
-            </span>
-          </a>
-
-          <button
-            type="button"
-            class="favorite-trigger"
-            [class.is-favorite]="item.isFavorite"
-            [attr.aria-pressed]="item.isFavorite"
-            [attr.aria-label]="(item.isFavorite ? 'Remover dos favoritos: ' : 'Adicionar aos favoritos: ') + item.name"
-            [title]="item.isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
-            [disabled]="savingFavorites().has(item.externalSeriesId)"
-            (click)="toggleFavorite(item, $event)"
-          >
-            <i [class]="item.isFavorite ? 'pi pi-heart-fill' : 'pi pi-heart'" aria-hidden="true"></i>
-          </button>
-
-          <div class="series-menu-container">
-            <button
-              type="button"
-              class="menu-trigger"
-              aria-label="Abrir opções da série"
-              aria-haspopup="menu"
-              title="Mais opções"
-              [attr.aria-expanded]="menuAbertoId() === item.externalSeriesId"
-              (click)="alternarMenu(item.externalSeriesId, $event)"
-            >
-              <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
-            </button>
-
-            @if (menuAbertoId() === item.externalSeriesId) {
-              <div
-                #seriesMenu
-                class="series-menu"
-                popover="manual"
-                role="menu"
-                [attr.aria-label]="'Opções de ' + item.name"
-                (click)="$event.stopPropagation()"
-                (keydown)="navigateMenu($event)"
-              >
-                <span class="menu-title"> Alterar status </span>
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  [class.active]="item.status === SeriesStatus.InList"
-                  (click)="alterarStatus(item, SeriesStatus.InList)"
-                >
-                  <i class="pi pi-bookmark" aria-hidden="true"></i>
-
-                  <span>Para assistir</span>
-
-                  @if (item.status === SeriesStatus.InList) {
-                    <i class="pi pi-check status-check" aria-hidden="true"></i>
-                  }
-                </button>
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  [class.active]="item.status === SeriesStatus.Watching"
-                  (click)="alterarStatus(item, SeriesStatus.Watching)"
-                >
-                  <i class="pi pi-play" aria-hidden="true"></i>
-
-                  <span>Assistindo</span>
-
-                  @if (item.status === SeriesStatus.Watching) {
-                    <i class="pi pi-check status-check" aria-hidden="true"></i>
-                  }
-                </button>
-
-                <button
-                  type="button"
-                  role="menuitem"
-                  [class.active]="item.status === SeriesStatus.Finished"
-                  (click)="alterarStatus(item, SeriesStatus.Finished)"
-                >
-                  <i class="pi pi-check-circle" aria-hidden="true"></i>
-
-                  <span>Finalizada</span>
-
-                  @if (item.status === SeriesStatus.Finished) {
-                    <i class="pi pi-check status-check" aria-hidden="true"></i>
-                  }
-                </button>
-
-                <div class="menu-divider" role="separator"></div>
-
-                <button
-                  type="button"
-                  class="remove-option"
-                  role="menuitem"
-                  (click)="remove(item, $event)"
-                >
-                  <i class="pi pi-trash" aria-hidden="true"></i>
-
-                  <span>Remover</span>
-                </button>
-              </div>
-            }
-          </div>
-        </div>
-
-        <div class="card-body">
-          <a [routerLink]="['/serie', item.externalSeriesId]">
-            <h2>{{ item.name }}</h2>
-          </a>
-        </div>
-      </article>
+      <ng-container *ngTemplateOutlet="seriesCard; context: { $implicit: item }"></ng-container>
     }
   </div>
     <button [hidden]="!listNavigation().next" type="button" class="carousel-arrow next" aria-label="Ver próximas séries da minha lista" (click)="scrollSeries(mySeriesRow, 1)">
@@ -264,3 +142,165 @@
     }
   </section>
 }
+
+@if (!loading()) {
+  <section class="favorites-section" aria-labelledby="anime-heading">
+    <h2 id="anime-heading" class="section-heading">
+      Animes
+      <span class="favorites-count">
+        {{ visibleAnimeItems().length }} {{ visibleAnimeItems().length === 1 ? 'anime' : 'animes' }}
+      </span>
+    </h2>
+
+    @if (visibleAnimeItems().length) {
+      <div class="series-carousel">
+        <button [hidden]="!animeNavigation().previous" type="button" class="carousel-arrow previous" aria-label="Ver animes anteriores" (click)="scrollSeries(animeRow, -1)">
+          <i class="pi pi-chevron-left" aria-hidden="true"></i>
+        </button>
+        <div #animeRow class="series-grid" tabindex="0" role="region" aria-label="Animes da minha lista, rolagem horizontal" (scroll)="fecharMenu()">
+          @for (item of visibleAnimeItems(); track item.id) {
+            <ng-container *ngTemplateOutlet="seriesCard; context: { $implicit: item }"></ng-container>
+          }
+        </div>
+        <button [hidden]="!animeNavigation().next" type="button" class="carousel-arrow next" aria-label="Ver próximos animes" (click)="scrollSeries(animeRow, 1)">
+          <i class="pi pi-chevron-right" aria-hidden="true"></i>
+        </button>
+      </div>
+    } @else {
+      <div class="empty-state favorites-empty">
+        <i class="pi pi-inbox" aria-hidden="true"></i>
+        <h3>{{ animeItems().length ? 'Nenhum anime nesta categoria' : 'Nenhum anime por aqui' }}</h3>
+        <p>{{ animeItems().length ? 'Selecione outro filtro para ver seus animes.' : 'Explore o catálogo e adicione seu primeiro anime à lista.' }}</p>
+        <a class="primary-link" routerLink="/explorar">
+          <i class="pi pi-search" aria-hidden="true"></i> Explorar catálogo
+        </a>
+      </div>
+    }
+  </section>
+}
+
+<ng-template #seriesCard let-item>
+  <article
+    class="series-card"
+    [class.menu-open]="menuAbertoId() === item.externalSeriesId"
+  >
+    <div class="poster-wrapper">
+      <a class="poster" [routerLink]="['/serie', item.externalSeriesId]">
+        @if (item.posterUrl) {
+          <img [src]="item.posterUrl" [alt]="'Pôster de ' + item.name" />
+        } @else {
+          <span>SeenIt</span>
+        }
+
+        <span class="status-badge status-{{ item.status }}">
+          {{ statusLabel(item.status) }}
+        </span>
+      </a>
+
+      <button
+        type="button"
+        class="favorite-trigger"
+        [class.is-favorite]="item.isFavorite"
+        [attr.aria-pressed]="item.isFavorite"
+        [attr.aria-label]="(item.isFavorite ? 'Remover dos favoritos: ' : 'Adicionar aos favoritos: ') + item.name"
+        [title]="item.isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'"
+        [disabled]="savingFavorites().has(item.externalSeriesId)"
+        (click)="toggleFavorite(item, $event)"
+      >
+        <i [class]="item.isFavorite ? 'pi pi-heart-fill' : 'pi pi-heart'" aria-hidden="true"></i>
+      </button>
+
+      <div class="series-menu-container">
+        <button
+          type="button"
+          class="menu-trigger"
+          [attr.aria-label]="'Abrir opções de ' + item.name"
+          aria-haspopup="menu"
+          title="Mais opções"
+          [attr.aria-expanded]="menuAbertoId() === item.externalSeriesId"
+          (click)="alternarMenu(item.externalSeriesId, $event)"
+        >
+          <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+        </button>
+
+        @if (menuAbertoId() === item.externalSeriesId) {
+          <div
+            #seriesMenu
+            class="series-menu"
+            popover="manual"
+            role="menu"
+            [attr.aria-label]="'Opções de ' + item.name"
+            (click)="$event.stopPropagation()"
+            (keydown)="navigateMenu($event)"
+          >
+            <span class="menu-title"> Alterar status </span>
+
+            <button
+              type="button"
+              role="menuitem"
+              [class.active]="item.status === SeriesStatus.InList"
+              (click)="alterarStatus(item, SeriesStatus.InList)"
+            >
+              <i class="pi pi-bookmark" aria-hidden="true"></i>
+
+              <span>Para assistir</span>
+
+              @if (item.status === SeriesStatus.InList) {
+                <i class="pi pi-check status-check" aria-hidden="true"></i>
+              }
+            </button>
+
+            <button
+              type="button"
+              role="menuitem"
+              [class.active]="item.status === SeriesStatus.Watching"
+              (click)="alterarStatus(item, SeriesStatus.Watching)"
+            >
+              <i class="pi pi-play" aria-hidden="true"></i>
+
+              <span>Assistindo</span>
+
+              @if (item.status === SeriesStatus.Watching) {
+                <i class="pi pi-check status-check" aria-hidden="true"></i>
+              }
+            </button>
+
+            <button
+              type="button"
+              role="menuitem"
+              [class.active]="item.status === SeriesStatus.Finished"
+              (click)="alterarStatus(item, SeriesStatus.Finished)"
+            >
+              <i class="pi pi-check-circle" aria-hidden="true"></i>
+
+              <span>Finalizada</span>
+
+              @if (item.status === SeriesStatus.Finished) {
+                <i class="pi pi-check status-check" aria-hidden="true"></i>
+              }
+            </button>
+
+            <div class="menu-divider" role="separator"></div>
+
+            <button
+              type="button"
+              class="remove-option"
+              role="menuitem"
+              (click)="remove(item, $event)"
+            >
+              <i class="pi pi-trash" aria-hidden="true"></i>
+
+              <span>Remover</span>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="card-body">
+      <a [routerLink]="['/serie', item.externalSeriesId]">
+        <h2>{{ item.name }}</h2>
+      </a>
+    </div>
+  </article>
+</ng-template>

@@ -30,3 +30,4 @@ Check(sunday.Today == new DateOnly(2026, 11, 1) && sunday.Days[0].Date == new Da
 var big = WatchTimeCalculator.Calculate([new(now, int.MaxValue), new(now, int.MaxValue)], zone, now);
 Check(big.TotalMinutes == 2L * int.MaxValue && big.Days[3].Minutes == big.TotalMinutes, "Aggregations must avoid integer overflow.");
 Console.WriteLine("Watch time checks passed: totals, empty history, unknown durations, timezone boundaries, week rollover and overflow.");
+await AnimeClassificationChecks.RunAsync();

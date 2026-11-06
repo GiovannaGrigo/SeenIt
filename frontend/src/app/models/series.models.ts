@@ -40,6 +40,7 @@ export interface UserSeries {
   summary?: string;
   status: SeriesStatus;
   isFavorite: boolean;
+  isAnime: boolean | null;
   addedAtUtc: string;
   updatedAtUtc: string;
 }
