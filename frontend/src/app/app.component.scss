@@ -1,4 +1,12 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
 .app-header {
+  flex-shrink: 0;
   height: 72px;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -104,12 +112,15 @@ nav a.active {
 }
 
 main {
+  flex: 1;
   width: min(1320px, 92vw);
   margin: 0 auto;
   padding: 2.5rem 0 5rem;
 }
 
 main.auth-main {
+  display: flex;
+  flex-direction: column;
   width: 100%;
   margin: 0;
   padding: 0;

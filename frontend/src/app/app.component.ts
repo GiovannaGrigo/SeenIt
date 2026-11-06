@@ -4,11 +4,12 @@ import { AuthService } from './core/auth.service';
 import { ThemeService } from './core/theme.service';
 import { NotificationService } from './core/notification.service';
 import { ToastModule } from 'primeng/toast';
+import { FooterComponent } from './shared/footer/footer.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ToastModule, FooterComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss'
 })
