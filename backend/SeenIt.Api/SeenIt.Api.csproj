@@ -6,6 +6,8 @@
     <UserSecretsId>313efe34-2197-4a6a-b9f9-20e41f78f83e</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="4.155.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.155.0" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.0" />
     <!-- Minimum patched 2.x version for GHSA-v5pm-xwqc-g5wc; overrides the transitive 2.0.0. -->

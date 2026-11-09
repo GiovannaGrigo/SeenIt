@@ -6,6 +6,8 @@ using SeenIt.Api.Data;
 using SeenIt.Api.Domain;
 using SeenIt.Api.DTOs.Profile;
 using SeenIt.Api.Services;
+using SeenIt.Api.Services.Avatars;
+using System.Data.Common;
 
 namespace SeenIt.Api.Controllers;
 
@@ -15,20 +17,11 @@ namespace SeenIt.Api.Controllers;
 public sealed class ProfileController(
     AppDbContext database,
     CurrentUserService currentUser,
-    IWebHostEnvironment environment,
+    AvatarProfileService avatars,
+    IAvatarStorageService avatarStorage,
     IPasswordHasher<User> passwordHasher)
     : ControllerBase
 {
-    private const long MaxAvatarSize = 5 * 1024 * 1024;
-
-    private static readonly Dictionary<string, string> AllowedTypes =
-        new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["image/jpeg"] = ".jpg",
-            ["image/png"] = ".png",
-            ["image/webp"] = ".webp"
-        };
-
     [HttpGet]
     [ProducesResponseType<ProfileResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -178,90 +171,40 @@ public sealed class ProfileController(
             });
         }
 
-        var avatarFileName = user.AvatarFileName;
-
-        database.Users.Remove(user);
-
-        await database.SaveChangesAsync(cancellationToken);
-
-        var directory = Path.Combine(
-            environment.WebRootPath,
-            "uploads",
-            "profiles");
-
-        DeleteAvatarFile(directory, avatarFileName);
-
-        return NoContent();
+        try
+        {
+            await avatars.DeleteAccountAsync(user.Id, user.AvatarFileName, user.PasswordHash, cancellationToken);
+            return NoContent();
+        }
+        catch (AvatarConflictException error) { return Conflict(new { message = error.Message }); }
+        catch (Exception error) when (error is DbException or DbUpdateException)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Não foi possível atualizar o perfil. Tente novamente." });
+        }
     }
 
     [HttpPut("avatar")]
-    [RequestSizeLimit(MaxAvatarSize)]
+    [RequestSizeLimit(AvatarImageProcessor.MaxRequestBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = AvatarImageProcessor.MaxFileBytes)]
     [ProducesResponseType<ProfileResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ProfileResponse>> UpdateAvatar([FromForm] IFormFile avatar, CancellationToken cancellationToken)
     {
-        if (avatar is null || avatar.Length == 0)
+        var user = await database.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == currentUser.UserId, cancellationToken);
+        if (user is null) return Unauthorized();
+        try
         {
-            return BadRequest(new
-            {
-                message = "Selecione uma imagem."
-            });
+            user.AvatarFileName = await avatars.ReplaceAsync(user.Id, user.AvatarFileName, avatar, cancellationToken);
+            return Ok(ToResponse(user));
         }
-
-        if (avatar.Length > MaxAvatarSize)
+        catch (InvalidAvatarException error) { return BadRequest(new { message = error.Message }); }
+        catch (AvatarConflictException error) { return Conflict(new { message = error.Message }); }
+        catch (AvatarStorageException error) { return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = error.Message }); }
+        catch (Exception error) when (error is DbException or DbUpdateException or IOException)
         {
-            return BadRequest(new
-            {
-                message = "A imagem deve possuir no máximo 5 MB."
-            });
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Não foi possível atualizar o avatar. Tente novamente." });
         }
-
-        if (!AllowedTypes.TryGetValue(
-                avatar.ContentType,
-                out var extension))
-        {
-            return BadRequest(new
-            {
-                message = "Envie uma imagem JPG, PNG ou WEBP."
-            });
-        }
-
-        var user = await database.Users.SingleOrDefaultAsync(
-            x => x.Id == currentUser.UserId,
-            cancellationToken
-        );
-
-        if (user is null)
-        {
-            return Unauthorized();
-        }
-
-        var directory = Path.Combine(
-            environment.WebRootPath,
-            "uploads",
-            "profiles"
-        );
-
-        Directory.CreateDirectory(directory);
-
-        var newFileName = $"{Guid.NewGuid():N}{extension}";
-        var newFilePath = Path.Combine(directory, newFileName);
-
-        await using (var stream = System.IO.File.Create(newFilePath))
-        {
-            await avatar.CopyToAsync(stream, cancellationToken);
-        }
-
-        var oldFileName = user.AvatarFileName;
-
-        user.AvatarFileName = newFileName;
-
-        await database.SaveChangesAsync(cancellationToken);
-
-        DeleteAvatarFile(directory, oldFileName);
-
-        return Ok(ToResponse(user));
     }
 
     [HttpDelete("avatar")]
@@ -269,62 +212,21 @@ public sealed class ProfileController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> DeleteAvatar(CancellationToken cancellationToken)
     {
-        var user = await database.Users.SingleOrDefaultAsync(
-            x => x.Id == currentUser.UserId,
-            cancellationToken
-        );
-
-        if (user is null)
+        var user = await database.Users.AsNoTracking().SingleOrDefaultAsync(x => x.Id == currentUser.UserId, cancellationToken);
+        if (user is null) return Unauthorized();
+        try
         {
-            return Unauthorized();
+            await avatars.RemoveAsync(user.Id, user.AvatarFileName, cancellationToken);
+            return NoContent();
         }
-
-        var oldFileName = user.AvatarFileName;
-
-        user.AvatarFileName = null;
-
-        await database.SaveChangesAsync(cancellationToken);
-
-        var directory = Path.Combine(
-            environment.WebRootPath,
-            "uploads",
-            "profiles"
-        );
-
-        DeleteAvatarFile(directory, oldFileName);
-
-        return NoContent();
-    }
-
-    private ProfileResponse ToResponse(User user)
-    {
-        var avatarUrl = string.IsNullOrWhiteSpace(user.AvatarFileName)
-            ? null
-            : $"{Request.Scheme}://{Request.Host}/uploads/profiles/{user.AvatarFileName}";
-
-        return new ProfileResponse(
-            user.Id,
-            user.Name,
-            user.Email,
-            avatarUrl
-        );
-    }
-
-    private static void DeleteAvatarFile(
-        string directory,
-        string? fileName)
-    {
-        if (string.IsNullOrWhiteSpace(fileName))
+        catch (AvatarConflictException error) { return Conflict(new { message = error.Message }); }
+        catch (Exception error) when (error is DbException or DbUpdateException)
         {
-            return;
-        }
-
-        var safeFileName = Path.GetFileName(fileName);
-        var filePath = Path.Combine(directory, safeFileName);
-
-        if (System.IO.File.Exists(filePath))
-        {
-            System.IO.File.Delete(filePath);
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { message = "Não foi possível atualizar o avatar. Tente novamente." });
         }
     }
+
+    private ProfileResponse ToResponse(User user) => new(
+        user.Id, user.Name, user.Email,
+        avatarStorage.GetPublicUrl(user.Id, user.AvatarFileName, Request));
 }

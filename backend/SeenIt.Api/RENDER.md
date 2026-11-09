@@ -45,4 +45,4 @@ Referências: [Render Web Services](https://render.com/docs/web-services), [ASP.
 
 ## Verificação posterior
 
-Executar builds e testes em homologação; aplicar migrations separadamente; validar CORS positivo/negativo, `/health`, login e geração de URLs através do proxy real. O armazenamento local de avatares permanece inalterado e requer uma solução persistente antes de habilitar uploads no Render.
+Executar builds e testes em homologação; aplicar migrations separadamente; validar CORS positivo/negativo, `/health`, login e geração de URLs através do proxy real. Em Production, avatares exigem Supabase Storage configurado; ver [AVATAR_STORAGE.md](AVATAR_STORAGE.md) para segredos, validação, compatibilidade de legados e teste integrado pendente. Não habilitar uploads antes de configurar o bucket e validar os assets nativos Linux no artefato de hospedagem.

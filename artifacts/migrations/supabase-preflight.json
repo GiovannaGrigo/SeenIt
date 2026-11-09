@@ -1,0 +1,17 @@
+{
+  "scriptSha256": "7BB53518EBCC556CCBB253225414F31D920EB93584ED98BCD14A390DF5DA06E5",
+  "backendSsl": "false",
+  "identity": {
+    "database": "postgres",
+    "role": "postgres",
+    "schema": "public",
+    "postgresqlMajor": 17,
+    "tls": true,
+    "source": "UserSecrets:ConnectionStrings:SupabaseTest"
+  },
+  "beforeTables": [],
+  "defaultGrantsSafe": true,
+  "dataApi": "Estado de ativa\u00E7\u00E3o n\u00E3o verific\u00E1vel com confian\u00E7a por SQL; confirmar desativada no painel Supabase.",
+  "preflight": "passed",
+  "status": "preflight-only; no database writes"
+}

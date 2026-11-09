@@ -12,6 +12,7 @@ using SeenIt.Api.Domain;
 using SeenIt.Api.DTOs;
 using SeenIt.Api.External;
 using SeenIt.Api.Services;
+using SeenIt.Api.Services.Avatars;
 using System.Text.Json.Serialization;
 using SeenIt.Api.Interfaces.Services;
 
@@ -92,6 +93,7 @@ if (proxyAddresses.Length > 0)
 }
 
 builder.Services.AddOpenApi();
+builder.Services.AddAvatarStorage(builder.Configuration, builder.Environment);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddHttpContextAccessor();
@@ -171,6 +173,8 @@ auth.MapPost("/register", async (
     AppDbContext database,
     IPasswordHasher<User> hasher,
     TokenService tokens,
+    IAvatarStorageService avatarStorage,
+    HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
     if (string.IsNullOrWhiteSpace(request.Name) ||
@@ -192,11 +196,11 @@ auth.MapPost("/register", async (
 
     var token = tokens.Create(user);
     return Results.Created("/api/auth/me", new AuthResponse(
-        token.Token, token.ExpiresAtUtc, new UserResponse(user.Id, user.Name, user.Email, user.AvatarFileName)));
+        token.Token, token.ExpiresAtUtc, new UserResponse(user.Id, user.Name, user.Email, avatarStorage.GetPublicUrl(user.Id, user.AvatarFileName, httpContext.Request))));
 });
 
 auth.MapPost("/login", async (LoginRequest request, AppDbContext database, IPasswordHasher<User> hasher, TokenService tokens,
-    HttpContext httpContext, CancellationToken cancellationToken) =>
+    HttpContext httpContext, IAvatarStorageService avatarStorage, CancellationToken cancellationToken) =>
 {
     if (!MailAddress.TryCreate(request.Email, out _) ||
         string.IsNullOrWhiteSpace(request.Password))
@@ -242,18 +246,7 @@ auth.MapPost("/login", async (LoginRequest request, AppDbContext database, IPass
 
     var token = tokens.Create(user);
 
-    string? avatarUrl = null;
-
-    if (!string.IsNullOrWhiteSpace(user.AvatarFileName))
-    {
-        var httpRequest = httpContext.Request;
-
-        avatarUrl =
-            $"{httpRequest.Scheme}://" +
-            $"{httpRequest.Host}" +
-            $"{httpRequest.PathBase}" +
-            $"/uploads/profiles/{Uri.EscapeDataString(user.AvatarFileName)}";
-    }
+    var avatarUrl = avatarStorage.GetPublicUrl(user.Id, user.AvatarFileName, httpContext.Request);
 
     return Results.Ok(
         new AuthResponse(

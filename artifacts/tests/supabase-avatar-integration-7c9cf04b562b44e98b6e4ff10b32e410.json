@@ -1,0 +1,30 @@
+{
+  "runId": "7c9cf04b562b44e98b6e4ff10b32e410",
+  "testEmail": "seenit-avatar-test-7c9cf04b562b44e98b6e4ff10b32e410@example.invalid",
+  "startedUtc": "2026-11-09T17:12:07.8134Z",
+  "configurationDiagnostics": {
+    "urlPresent": true,
+    "urlAcceptedByImplementation": false,
+    "urlHttps": true,
+    "urlExpectedSupabaseHost": false,
+    "urlRootPath": true,
+    "urlHasNoCredentials": true,
+    "urlHasNoQueryOrFragment": true,
+    "urlDefaultHttpsPort": true,
+    "secretKeyPresent": true,
+    "secretKeyHasExpectedPrefix": true,
+    "secretKeyFormatAccepted": true,
+    "secretKeyContainsWhitespace": false,
+    "bucketPresent": true,
+    "bucketIsAvatars": true
+  },
+  "cleanup": "No test writes were made",
+  "noCredentialsDetectedInCapturedLogs": true,
+  "cleanupWarningCount": 0,
+  "logLineCount": 0,
+  "filesAndUserSecretsUnchanged": true,
+  "knownTestObjectPaths": [],
+  "testUserId": null,
+  "status": "failed or incomplete",
+  "finishedUtc": "2026-11-09T17:12:07.8883871Z"
+}

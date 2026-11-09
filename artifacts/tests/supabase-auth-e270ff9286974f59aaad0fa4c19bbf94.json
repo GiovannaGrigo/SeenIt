@@ -1,0 +1,41 @@
+{
+  "testRun": "e270ff9286974f59aaad0fa4c19bbf94",
+  "testEmail": "seenit-test-e270ff9286974f59aaad0fa4c19bbf94@example.invalid",
+  "startedUtc": "2026-11-09T16:29:45.67449Z",
+  "countsBefore": {
+    "Users": 0,
+    "UserSeries": 0,
+    "EpisodiosAssistidos": 0,
+    "EpisodiosAssistidosSentimentos": 0,
+    "__EFMigrationsHistory": 3
+  },
+  "destination": "SupabaseTest / postgres / public / PostgreSQL 17 / TLS",
+  "temporaryPort": 55484,
+  "anonymousProfileHttp": 401,
+  "registerHttp": 201,
+  "persistedUserVerified": true,
+  "loginHttp": 200,
+  "wrongPasswordHttp": 401,
+  "profileHttp": 200,
+  "invalidSignatureHttp": 401,
+  "addSeriesHttp": 201,
+  "listSeriesHttp": 200,
+  "persistedSeriesVerified": true,
+  "deleteSeriesHttp": 204,
+  "cleanupErrorType": "ObjectDisposedException",
+  "temporaryInstanceStopped": true,
+  "permanentConfigurationUnchanged": true,
+  "status": "passed; cleanup recovered",
+  "finishedUtc": "2026-11-09T16:30:07.0296862Z",
+  "countsAfter": {
+    "Users": 0,
+    "UserSeries": 0,
+    "EpisodiosAssistidos": 0,
+    "EpisodiosAssistidosSentimentos": 0,
+    "__EFMigrationsHistory": 3
+  },
+  "countsMatchBaseline": true,
+  "cleanupRecovered": true,
+  "cleanup": "Specific test account removed by parameterized SQL after HTTP cleanup client lifetime failure; exact run email/name/id/timestamp guards; all table counts match baseline",
+  "cleanupFinishedUtc": "2026-11-09T16:31:29.9381978Z"
+}

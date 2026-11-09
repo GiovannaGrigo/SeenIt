@@ -1,0 +1,46 @@
+{
+    "runId":  "fb6fb5b3e0884fb9a61cc3e52734ee03",
+    "testEmail":  "seenit-avatar-test-fb6fb5b3e0884fb9a61cc3e52734ee03@example.invalid",
+    "startedUtc":  "2026-11-09T17:11:36.327552Z",
+    "failedStage":  "preflight",
+    "errorType":  "TestFailure",
+    "failure":  "Storage configuration invalid; no secret values printed",
+    "cleanup":  "No test writes were made",
+    "noCredentialsDetectedInCapturedLogs":  true,
+    "cleanupWarningCount":  0,
+    "logLineCount":  0,
+    "filesAndUserSecretsUnchanged":  true,
+    "knownTestObjectPaths":  [
+
+                             ],
+    "testUserId":  null,
+    "status":  "blocked-before-execution",
+    "finishedUtc":  "2026-11-09T17:11:36.5118111Z",
+    "configurationDiagnostics":  {
+                                     "urlPresent":  true,
+                                     "urlAcceptedByImplementation":  false,
+                                     "urlHttps":  true,
+                                     "urlExpectedSupabaseHost":  false,
+                                     "urlRootPath":  true,
+                                     "urlHasNoCredentials":  true,
+                                     "urlHasNoQueryOrFragment":  true,
+                                     "urlDefaultHttpsPort":  true,
+                                     "secretKeyPresent":  true,
+                                     "secretKeyHasExpectedPrefix":  true,
+                                     "secretKeyFormatAccepted":  true,
+                                     "secretKeyContainsWhitespace":  false,
+                                     "bucketPresent":  true,
+                                     "bucketIsAvatars":  true
+                                 },
+    "temporaryInstanceStarted":  false,
+    "databaseOrStorageWritesMade":  false,
+    "stagesNotExecuted":  [
+                              "registration",
+                              "authentication",
+                              "uploadA",
+                              "publicWebpValidation",
+                              "replacementB",
+                              "avatarDeletion"
+                          ],
+    "blockingConfigurationKey":  "SupabaseStorage:Url"
+}
