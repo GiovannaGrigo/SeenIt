@@ -1,48 +1,129 @@
-# Preparação para Render
+# Backend SeenIt no Render com Docker
 
-Nenhum deploy ou migration é executado pela inicialização. Ainda é necessário preparar o artefato/container .NET 10 e uma etapa controlada de migrations antes da publicação.
+Preparação local, sem deploy. As três migrations já foram aplicadas no Supabase e **não** fazem parte do build, entrypoint ou pre-deploy command. O frontend permanece em serviço separado na Vercel.
 
-## Variáveis de ambiente
+## Arquivos e contexto
 
-Exemplo documental: os marcadores abaixo NÃO são valores válidos e precisam ser substituídos no painel do serviço. Arquivos `.env` não são carregados automaticamente pelo ASP.NET Core.
+- Dockerfile: `backend/SeenIt.Api/Dockerfile`.
+- Build context: raiz do repositório (`.`), não `backend/SeenIt.Api`.
+- `.dockerignore` da raiz usa allowlist para API, dois projetos de verificações e configuração sanitizada do container. Frontend, artifacts, bin/obj, node_modules, uploads, configurações locais, `.env`, certificados e secrets ficam fora do contexto.
+- `backend/docker/runtime-settings.json` contém somente URL pública do TVmaze e níveis de logging. É copiado como `/app/appsettings.json`. **Nenhum `appsettings*.json` local é enviado ao build**, inclusive o arquivo com a conexão local.
+- O Dockerfile não declara `ARG` de segredo e não carrega User Secrets. O Render pode disponibilizar variáveis de ambiente também como build arguments: não adicionar referências a elas no Dockerfile. Não cadastrar secret files dentro dos caminhos permitidos do backend.
+
+## Imagem Linux e verificações
+
+São usadas as imagens oficiais `mcr.microsoft.com/dotnet/sdk:10.0-noble` e `mcr.microsoft.com/dotnet/aspnet:10.0-noble` (Ubuntu/glibc), com publish Release, RID `linux-x64`, framework-dependent, sem apphost ou trimming. Construir para `linux/amd64`. A imagem final contém apenas o publish da API, a configuração sanitizada e um marcador de verificações; não contém SDK, fontes ou executáveis de teste.
+
+O usuário final é `app` (não root). O código permanece somente para leitura pelo usuário da aplicação; `/home/app/.aspnet/DataProtection-Keys` é gravável por ele. O diretório vazio `/app/wwwroot` existe para o middleware estático. Avatares em Production vão para Supabase Storage, sem gravação no filesystem da imagem. As chaves de Data Protection são efêmeras no container; JWT continua usando a chave explícita de configuração. Se futuramente forem usados cookies/proteção de dados persistentes, definir armazenamento compartilhado de chaves antes de escalar.
+
+O estágio `verify` roda sobre a **mesma imagem de runtime** da API. Compara os binários SkiaSharp de testes e publish, executa `ldd` em `libSkiaSharp.so` (falha se existir `not found`) e roda os testes existentes:
+
+- `SeenIt.AvatarChecks`: decodifica JPEG/PNG/WebP reais e converte para WebP, além dos testes de validação, Storage HTTP simulado, persistência, concorrência e contratos.
+- `SeenIt.Checks`: tempo assistido, fusos horários e classificação de séries com HTTP simulado.
+
+A imagem Ubuntu já fornece libc, libm, libdl, libpthread, runtime C/C++, certificados CA, ICU e tzdata. Os assets `SkiaSharp.NativeAssets.Linux.NoDependencies` não exigem fontconfig para a conversão de bitmaps usada aqui. A verificação real, não apenas essa expectativa, deve passar. Não trocar por Alpine/musl ou imagem chiseled sem nova validação.
+
+O estágio final depende do marcador gerado por `verify`, portanto o build completo executa as verificações. Restaurar e publicar também executa a auditoria normal do NuGet; há ainda listagem explícita de vulnerabilidades nos três projetos. `dotnet package list --vulnerable` é informativo: saída zero não é uma política automática de reprovação por advisory. Revisar seu resultado antes de publicar. Atualizar/revalidar imagens base e pacotes nativos; NuGetAudit não audita todos os componentes do sistema operacional/Skia nativo. Para releases reproduzíveis, registrar e fixar digests verificados das imagens oficiais, atualizando-os sob controle.
+
+Comandos, na raiz do repositório:
+
+```powershell
+docker build --platform linux/amd64 -t seenit-api:render-check -f backend/SeenIt.Api/Dockerfile .
+powershell -NoProfile -File backend/docker/Test-Container.ps1 -Image seenit-api:render-check
+```
+
+`Test-Container.ps1` inicia a imagem final em Production, como não root, sem SDK e com `--network none`. Usa somente configuração sintética de runtime e uma chave JWT aleatória descartável; não lê User Secrets, não possui credenciais reais e não pode acessar Supabase. Faz GET HTTP real a `/health` por loopback dentro do container, usando a porta alternativa 18081 para comprovar o override `PORT`; verifica o binding `0.0.0.0`. Remove apenas seu próprio container e restaura as variáveis do processo ao terminar. Não são necessários curl, SDK ou utilitário de teste na imagem final.
+
+A porta pode ser testada explicitamente com `-Port 10000` ou outro valor acima de 1023. O script não é um teste integrado de banco/Storage e não valida a infraestrutura real de proxy do Render.
+
+### Resultado da validação local desta preparação
+
+| Verificação | Resultado |
+|---|---|
+| Build Docker completo, Release `linux-x64` | aprovado, imagem `seenit-api:render-check` |
+| Plataforma e usuário | `linux/amd64`, `app`, UID 1654 |
+| SkiaSharp no runtime Ubuntu | decodificação JPEG/PNG/WebP e conversão WebP reais aprovadas; 16 grupos de AvatarChecks passaram |
+| Dependências nativas | `ldd` resolveu libc, libm, libdl, libpthread, librt, libstdc++ e libgcc_s, sem `not found` |
+| Testes existentes | tempo assistido/fusos e classificação de séries aprovados no container |
+| Auditoria NuGet | nenhum pacote vulnerável nos três projetos, no host e no build Linux |
+| Smoke da imagem final | Production, sem SDK, não root, `--network none`, somente configuração sintética |
+| Override de `PORT` | binding real `http://0.0.0.0:18081` confirmado |
+| GET `/health` no Linux | HTTP 200, `{"status":"ok"}` |
+| Configurações e fotos locais | somente `appsettings.json` sanitizado, sem connection strings/chaves; wwwroot sem arquivos locais |
+| Limpeza | container temporário removido; variáveis do processo restauradas |
+
+Identificador local observado: `sha256:75239e6e66ef184b6057fd61eb197ec6797d0207bbe93d7cf24925d145fcea28`. A imagem foi construída localmente e não foi enviada para registry nem publicada. Nenhuma credencial real, banco ou Storage foi utilizado nessas verificações. Repetir o build e o smoke test após mudanças de imagem/pacotes; esse resultado não valida a topologia do Render.
+
+## Configuração específica no painel Render
+
+Quando houver autorização para o primeiro deploy:
+
+| Campo | Configuração |
+|---|---|
+| Tipo | Web Service |
+| Language / Runtime | Docker |
+| Root Directory | vazio: raiz do repositório |
+| Dockerfile Path | `backend/SeenIt.Api/Dockerfile` |
+| Docker Build Context Directory | `.` |
+| Docker Command | vazio, para usar `ENTRYPOINT ["dotnet", "SeenIt.Api.dll"]` |
+| Build / Start Command | sem comandos adicionais; Dockerfile faz build/publish e entrypoint inicia a API |
+| Pre-Deploy Command | vazio; nenhuma migration automática |
+| Health Check Path | `/health` |
+| Porta | `PORT=10000`, ou o valor fornecido/configurado no serviço |
+| Auto-Deploy | manter desabilitado até concluir as pendências e autorizar a publicação |
+
+Opcionalmente configurar build filters para `backend/SeenIt.Api/**`, `backend/SeenIt.AvatarChecks/**`, `backend/SeenIt.Checks/**`, `backend/docker/**` e `.dockerignore`, evitando rebuild por mudanças exclusivas no Angular. Não mudar o Root Directory para a API: os outros projetos e a configuração ficariam inacessíveis ao build.
+
+O Dockerfile define HTTP na porta 10000. `Program.cs` já lê `PORT`, valida 1–65535 e usa `http://0.0.0.0:{PORT}`; esse código não foi alterado. `EXPOSE` é metadado, não faz publicação de porta nem limita um override. O TLS externo é terminado pelo Render. Não instalar certificado de desenvolvimento nem habilitar HTTPS interno com certificados locais.
+
+`GET /health` é anônimo e retorna `200 {"status":"ok"}` inclusive via HTTP interno, sem redirecionar. É somente liveness: não consulta PostgreSQL/Storage e não comprova prontidão desses serviços. A configuração `AllowedHosts` deve incluir o hostname efetivamente usado pelo health check (domínio confirmado e/ou subdomínio onrender.com).
+
+## Variáveis de ambiente de runtime
+
+Cadastrar valores reais somente no gerenciador de segredos/ambiente do serviço, nunca no Git, Dockerfile, build args, logs ou frontend. Os marcadores abaixo não são valores utilizáveis:
 
 ```text
 ASPNETCORE_ENVIRONMENT=Production
-ConnectionStrings__DefaultConnection=<CONEXAO_POSTGRESQL_COM_TLS>
-Jwt__Key=<BASE64_DE_PELO_MENOS_32_BYTES_CRIPTOGRAFICAMENTE_ALEATORIOS>
-Jwt__Issuer=<IDENTIFICADOR_DO_EMISSOR>
-Jwt__Audience=<IDENTIFICADOR_DO_PUBLICO>
-Jwt__ExpirationMinutes=<INTEIRO_POSITIVO_EM_MINUTOS>
-Cors__AllowedOrigins__0=<ORIGEM_HTTPS_EXATA_DO_FRONTEND_SEM_BARRA_FINAL>
-ReverseProxy__KnownProxies__0=<IP_DO_PROXY_IMEDIATO_CONFIRMADO_PELO_PROVEDOR>
+DOTNET_ENVIRONMENT=Production
+PORT=10000
+ConnectionStrings__DefaultConnection=<CONEXAO_SUPABASE_NPGSQL_COM_TLS>
+Jwt__Key=<BASE64_DE_32_OU_MAIS_BYTES_ALEATORIOS_NOVOS>
+Jwt__Issuer=<EMISSOR_CONFIRMADO>
+Jwt__Audience=<PUBLICO_CONFIRMADO>
+Jwt__ExpirationMinutes=<INTEIRO_POSITIVO>
+SupabaseStorage__Url=https://<PROJECT_REF>.supabase.co
+SupabaseStorage__SecretKey=<SB_SECRET_SOMENTE_BACKEND>
+SupabaseStorage__Bucket=avatars
+Cors__AllowedOrigins__0=https://<HOST_CONFIRMADO_DO_FRONTEND_VERCEL>
+AllowedHosts=<HOST_CONFIRMADO_DA_API>
+ReverseProxy__KnownProxies__0=<IP_CONFIRMADO_DO_PROXY_IMEDIATO>
 ```
 
-Em Production, conexão não vazia e todos os parâmetros JWT são obrigatórios. Issuer, audience e expiração têm defaults em `appsettings.json`; confirme seus valores para produção. A chave não tem default: deve ser um segredo novo gerado com um gerador criptográfico, usando pelo menos 32 bytes aleatórios codificados em Base64. Não reutilize a chave local nem uma chave que já esteve no Git. A validação rejeita formato/tamanho inválidos e bytes todos iguais; nenhum teste de uma string consegue comprovar a entropia ou a origem aleatória. A geração segura continua obrigatória.
+Em Production todos os parâmetros JWT, conexão não vazia e Supabase Storage válido são obrigatórios. A chave JWT deve ser nova, gerada criptograficamente, Base64 de pelo menos 32 bytes. A API usa essa string como texto UTF-8 no HS256, preservando o contrato existente; a decodificação em Production serve apenas à validação. Não reutilizar a chave local nem confundi-la com a Secret API Key do Supabase.
 
-Para preservar o contrato de assinatura existente, a string Base64 é usada como texto UTF-8 no HS256, exatamente como as chaves anteriores; ela não é decodificada na assinatura. A decodificação em Production serve apenas à validação do formato e tamanho. User Secrets e a chave local não são alterados.
+O container não contém os defaults locais de issuer/audience/expiração: preencher essas variáveis explicitamente. `SupabaseStorage__Enabled` não é necessário em Production, pois o código exige Storage persistente. A Secret API Key `sb_secret_` é enviada apenas em `apikey`, nunca como JWT ou URL. O bucket `avatars` precisa aceitar WebP e ter o limite esperado de 5 MiB. Rever [AVATAR_STORAGE.md](AVATAR_STORAGE.md), incluindo migração conservadora dos arquivos legados e monitoramento de limpeza pendente.
 
-Não há domínio fictício de Vercel/Render nem credenciais neste exemplo. Configure a conexão Npgsql conforme o endpoint PostgreSQL/Supabase escolhido, com TLS e validação de certificado adequados, sem desabilitá-la.
+No Render, `ConnectionStrings__DefaultConnection` é a configuração exclusiva do **processo remoto**. Não alterar a chave local no arquivo ou nos User Secrets, nem presumir que `SupabaseTest` será selecionada. O Dockerfile não conhece nenhuma dessas conexões. Nenhuma conexão real é usada no build ou smoke test.
 
-CORS sem origens configuradas não autoriza nenhuma origem em Production. Configure a origem HTTPS exata quando ela existir. HTTP, curingas, caminhos, credenciais, query strings e barras finais são rejeitados. Acrescente outras origens explicitamente com índices `__1`, `__2`, etc.; não há wildcard de previews. Em Development, `http://localhost:4200` é sempre preservada.
+CORS precisa da origem HTTPS exata do frontend Vercel, sem caminho, wildcard ou barra final. Origens adicionais exigem índices `__1`, `__2` etc. Não autorizar automaticamente todos os previews de Vercel. Sem origens, Production não autoriza CORS.
 
-## Porta e execução local
+## Forwarded headers: bloqueio operacional antes do primeiro deploy
 
-`PORT`, quando fornecida pelo Render, define a escuta HTTP em `0.0.0.0` naquela porta (1–65535). Não coloque marcadores de exemplo nessa variável. Sem `PORT`, a aplicação mantém a configuração normal de URLs, inclusive o HTTPS/HTTP de `Properties/launchSettings.json` ao executar `dotnet run` localmente. Não deixe `PORT` definida no terminal local se quiser usar esse perfil.
+A implementação atual foi revisada e permanece restrita: ativa `UseForwardedHeaders` apenas quando há IPs explícitos em `ReverseProxy:KnownProxies`; limpa as redes padrão e adiciona somente os IPs confirmados (inclusive representação IPv4 mapeada). Aceita apenas `X-Forwarded-For` e `X-Forwarded-Proto`, com `ForwardLimit=1`, antes do redirecionamento HTTPS. Não aceita `X-Forwarded-Host` e não confia em qualquer proxy.
 
-`GET /health` é anônimo e retorna `200` com `{"status":"ok"}`, inclusive via HTTP interno. Não acessa o PostgreSQL e não comprova a disponibilidade do banco. Somente esse caminho é excluído do redirecionamento HTTPS; os demais preservam o middleware existente.
+Não configurar `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true`: a aplicação deliberadamente rejeita esse atalho amplo. Não liberar `0.0.0.0/0`, não confiar em todos os proxies e não forçar `Request.Scheme` a partir de um cabeçalho arbitrário. A origem HTTPS precisa ser reconhecida pelo middleware com um proxy confiável.
 
-## Reverse proxy e TLS: pendência antes de publicar
+Confirmar com o Render o IP/remoto realmente visto por Kestrel, a estabilidade desse endereço, quantidade de saltos e sanitização de cabeçalhos. Não inferir esses IPs do DNS público ou dos IPs de saída do serviço. Sem isso, `/health` pode passar enquanto o restante da API reconhece o protocolo incorretamente. Se a topologia não permitir uma lista estável de IPs ou exigir vários saltos, a configuração atual não basta: revisar a integração antes de publicar, sem remover a validação por conveniência.
 
-O Render termina TLS no balanceador e encaminha HTTP para a aplicação. É necessário confirmar os IPs do proxy imediatamente conectado à API, a cadeia de saltos e como o provedor normaliza `X-Forwarded-Proto` e `X-Forwarded-For`. Não inferir esses IPs a partir do DNS público, dos IPs de saída do serviço ou de cabeçalhos enviados por clientes.
+Validar então HTTPS externo, ausência de loops, geração de URLs legadas e descarte de `X-Forwarded-*` forjados por clientes. Nenhuma dessas verificações reais de infraestrutura é comprovada pelo smoke test local.
 
-Somente quando `ReverseProxy:KnownProxies` contém IPs explícitos o middleware de forwarded headers é ativado. A lista de confiança fica restrita a esses IPs (incluindo a representação IPv4 mapeada em IPv6); não são liberadas redes inteiras. Apenas `X-Forwarded-Proto` e `X-Forwarded-For` são processados, com limite de um salto, antes do redirecionamento HTTPS, dos arquivos estáticos e da geração de URLs. `X-Forwarded-Host` não é aceito.
+## Pendências antes da publicação
 
-Sem essa lista, os cabeçalhos são ignorados. Não habilite `ASPNETCORE_FORWARDEDHEADERS_ENABLED=true`: a aplicação rejeita essa opção por ela ativar confiança ampla no framework. Configure também `AllowedHosts` com o host público confirmado antes de publicar; atualmente o default continua `*` para preservar o funcionamento local.
+1. Repetir build, native checks e `/health` no artefato final de release se houver mudanças; a validação local atual está registrada acima. Se Docker estiver indisponível em uma execução futura, não presumir que um novo artefato foi validado.
+2. Confirmar proxy/forwarded headers e domínio de API; cadastrar AllowedHosts e CORS da Vercel.
+3. Cadastrar segredos de runtime no Render e conferir conexão TLS/projeto Supabase, bucket e políticas de acesso. Não repetir migrations já aplicadas automaticamente.
+4. Confirmar que avatares legados necessários foram migrados ou preservados em armazenamento acessível; disco efêmero não é backup.
+5. Validar no serviço futuro a conectividade com PostgreSQL/Storage e os fluxos reais com um usuário fictício, sob autorização, sem alterar dados existentes.
+6. Revisar a auditoria NuGet e o scanner da imagem/OS, fixar os digests de release e só então autorizar o deploy.
 
-Após confirmar a topologia, valide que a API reconhece o protocolo HTTPS externo, gera URLs HTTPS e não redireciona em loop. Se houver múltiplos saltos ou endereços variáveis sem uma lista confiável, essa configuração ainda é insuficiente: revisar a topologia com o provedor antes do deploy, sem aceitar qualquer proxy nem forçar `Request.Scheme` a partir de cabeçalhos não confiáveis.
-
-Referências: [Render Web Services](https://render.com/docs/web-services), [ASP.NET Core: proxies e balanceadores](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-10.0).
-
-## Verificação posterior
-
-Executar builds e testes em homologação; aplicar migrations separadamente; validar CORS positivo/negativo, `/health`, login e geração de URLs através do proxy real. Em Production, avatares exigem Supabase Storage configurado; ver [AVATAR_STORAGE.md](AVATAR_STORAGE.md) para segredos, validação, compatibilidade de legados e teste integrado pendente. Não habilitar uploads antes de configurar o bucket e validar os assets nativos Linux no artefato de hospedagem.
+Referências oficiais: [Docker no Render](https://render.com/docs/docker), [monorepo/contexto](https://render.com/docs/monorepo-support), [port binding](https://render.com/docs/web-services#port-binding), [health checks](https://render.com/docs/health-checks), [imagens .NET](https://learn.microsoft.com/en-us/dotnet/core/docker/container-images), [forwarded headers ASP.NET Core](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/proxy-load-balancer?view=aspnetcore-10.0).

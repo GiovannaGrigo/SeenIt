@@ -1,0 +1,11 @@
+{
+  "TvMaze": {
+    "BaseUrl": "https://api.tvmaze.com/"
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
