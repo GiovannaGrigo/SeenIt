@@ -2,10 +2,11 @@ import { Injectable, computed, signal } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { tap } from "rxjs";
 import { AuthResponse, User } from "../models/auth.models";
+import { environment } from "../../environments/environment";
 
 @Injectable({ providedIn: "root" })
 export class AuthService {
-  private readonly apiUrl = "https://localhost:7042/api/auth";
+  private readonly apiUrl = `${environment.apiUrl}/auth`;
 
   private readonly tokenKey = "seenit_token";
   private readonly userKey = "seenit_user";
@@ -73,7 +74,6 @@ export class AuthService {
   }
 
   private saveSession(response: AuthResponse): void {
-    console.log("Response login:", response);
     console.log("User recebido:", response.user);
     console.log("Avatar recebido:", response.user.avatarUrl);
 

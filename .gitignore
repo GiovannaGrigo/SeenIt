@@ -8,3 +8,26 @@
 *.db-wal
 .idea/
 .vscode/
+
+
+# Arquivos locais de configuração
+.env
+.env.*
+!.env.example
+
+# Configurações locais do .NET
+**/appsettings.Development.local.json
+**/appsettings.Production.local.json
+
+# Segredos de desenvolvimento
+**/secrets.json
+
+# Arquivos enviados pelos usuários
+**/wwwroot/uploads/
+**/wwwroot/avatars/
+
+# Certificados e chaves privadas
+*.pfx
+*.p12
+*.pem
+*.key

@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Episode, SeriesDetails, SeriesStatus, SeriesSummary, UserSeries } from '../models/series.models';
+import { environment } from '../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class SeriesService {
-  private readonly apiUrl = 'https://localhost:7042/api';
+  private readonly apiUrl = environment.apiUrl;
   constructor(private readonly http: HttpClient) {}
 
   search(query: string) {

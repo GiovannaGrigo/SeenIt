@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using System.Net.Mail;
+using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using SeenIt.Api.Data;
@@ -14,6 +16,80 @@ using System.Text.Json.Serialization;
 using SeenIt.Api.Interfaces.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrWhiteSpace(port))
+{
+    if (!int.TryParse(port, out var portNumber) || portNumber is < 1 or > 65535)
+        throw new InvalidOperationException("PORT deve ser uma porta válida entre 1 e 65535.");
+    builder.WebHost.UseUrls($"http://0.0.0.0:{portNumber}");
+}
+
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) ||
+    string.IsNullOrWhiteSpace(builder.Configuration["Jwt:Issuer"]) ||
+    string.IsNullOrWhiteSpace(builder.Configuration["Jwt:Audience"]) ||
+    !int.TryParse(builder.Configuration["Jwt:ExpirationMinutes"], out var expirationMinutes) ||
+    expirationMinutes <= 0)
+    throw new InvalidOperationException("Configure Jwt:Key, Jwt:Issuer, Jwt:Audience e Jwt:ExpirationMinutes positivo.");
+
+if (builder.Environment.IsProduction())
+{
+    // A geração aleatória é um requisito operacional; o formato e o tamanho são verificáveis aqui.
+    byte[] keyBytes;
+    try { keyBytes = Convert.FromBase64String(jwtKey); }
+    catch (FormatException)
+    {
+        throw new InvalidOperationException("Em Production, Jwt:Key deve ser Base64 de pelo menos 32 bytes gerados aleatoriamente.");
+    }
+    if (keyBytes.Length < 32 || keyBytes.Distinct().Count() == 1)
+        throw new InvalidOperationException("Em Production, Jwt:Key deve conter pelo menos 32 bytes gerados aleatoriamente.");
+    if (string.IsNullOrWhiteSpace(builder.Configuration.GetConnectionString("DefaultConnection")))
+        throw new InvalidOperationException("Configure ConnectionStrings:DefaultConnection em Production.");
+}
+
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+if (builder.Environment.IsDevelopment())
+    allowedOrigins = allowedOrigins.Append("http://localhost:4200").Distinct().ToArray();
+foreach (var origin in allowedOrigins)
+{
+    if (!Uri.TryCreate(origin, UriKind.Absolute, out var uri) ||
+        (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp) ||
+        (builder.Environment.IsProduction() && uri.Scheme != Uri.UriSchemeHttps) ||
+        origin.Contains('*') || !string.IsNullOrEmpty(uri.UserInfo) ||
+        uri.AbsolutePath != "/" || !string.IsNullOrEmpty(uri.Query) ||
+        !string.IsNullOrEmpty(uri.Fragment) || origin.EndsWith('/'))
+        throw new InvalidOperationException("Cors:AllowedOrigins deve conter origens explícitas sem caminho ou barra final; em Production, apenas HTTPS.");
+}
+
+// Evita a ativação automática do ASP.NET Core, que aceita cabeçalhos de qualquer proxy.
+if (string.Equals(Environment.GetEnvironmentVariable("ASPNETCORE_FORWARDEDHEADERS_ENABLED"), "true", StringComparison.OrdinalIgnoreCase))
+    throw new InvalidOperationException("Não habilite ASPNETCORE_FORWARDEDHEADERS_ENABLED; configure ReverseProxy:KnownProxies explicitamente.");
+
+var knownProxies = builder.Configuration.GetSection("ReverseProxy:KnownProxies").Get<string[]>() ?? [];
+var proxyAddresses = knownProxies.Select(value =>
+{
+    if (!IPAddress.TryParse(value, out var address) ||
+        address.Equals(IPAddress.Any) || address.Equals(IPAddress.IPv6Any))
+        throw new InvalidOperationException("ReverseProxy:KnownProxies deve conter apenas endereços IP explícitos e confiáveis.");
+    return address;
+}).ToArray();
+if (proxyAddresses.Length > 0)
+{
+    builder.Services.Configure<ForwardedHeadersOptions>(options =>
+    {
+        options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+        options.ForwardLimit = 1;
+        options.KnownIPNetworks.Clear();
+        options.KnownProxies.Clear();
+        foreach (var address in proxyAddresses)
+        {
+            options.KnownProxies.Add(address);
+            if (address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+                options.KnownProxies.Add(address.MapToIPv6());
+        }
+    });
+}
 
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -30,9 +106,6 @@ builder.Services.AddHttpClient<TvMazeClient>(client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("SeenIt/1.0");
     client.Timeout = TimeSpan.FromSeconds(15);
 });
-
-var jwtKey = builder.Configuration["Jwt:Key"]
-    ?? throw new InvalidOperationException("Jwt:Key não foi configurada.");
 
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -51,7 +124,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.AddCors(options => options.AddPolicy("Frontend", policy =>
-    policy.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod()));
+{
+    if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins);
+    policy.AllowAnyHeader().AllowAnyMethod();
+}));
 
 builder.Services
 .AddControllers()
@@ -77,12 +153,16 @@ builder.Services.AddHttpClient<
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
-app.UseHttpsRedirection();
+if (proxyAddresses.Length > 0) app.UseForwardedHeaders();
+// O health check básico também atende o tráfego HTTP interno do provedor.
+app.UseWhen(context => !context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase),
+    branch => branch.UseHttpsRedirection());
 app.UseStaticFiles();
 app.UseCors("Frontend");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 
 var auth = app.MapGroup("/api/auth").WithTags("Autenticação");
 

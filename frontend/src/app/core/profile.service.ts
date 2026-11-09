@@ -1,6 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable, inject } from "@angular/core";
 import { Observable } from "rxjs";
+import { environment } from "../../environments/environment";
 
 export interface ProfileResponse {
   id: string;
@@ -22,7 +23,7 @@ export interface WatchTimeResponse {
 export class ProfileService {
   private readonly http = inject(HttpClient);
 
-  private readonly apiUrl = "https://localhost:7042/api/profile";
+  private readonly apiUrl = `${environment.apiUrl}/profile`;
 
   getProfile(): Observable<ProfileResponse> {
     return this.http.get<ProfileResponse>(this.apiUrl);
