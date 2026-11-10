@@ -40,7 +40,8 @@ ENV ASPNETCORE_ENVIRONMENT=Production \
     ASPNETCORE_HTTP_PORTS=10000 \
     HOME=/home/app
 WORKDIR /app
-RUN mkdir -p /app/wwwroot /home/app/.aspnet/DataProtection-Keys \
+RUN mkdir -p /app/wwwroot /app/certs /home/app/.aspnet/DataProtection-Keys \
+    && chmod 0755 /app /app/certs \
     && chown -R app:app /home/app/.aspnet
 USER app
 
@@ -64,7 +65,16 @@ FROM runtime-base AS final
 COPY --from=build /out/api/ /app/
 COPY --from=verify /tmp/seenit-container-checks-passed /app/.container-checks-passed
 COPY --chmod=0444 backend/docker/certs/prod-ca-2021.crt /app/certs/prod-ca-2021.crt
-RUN test -s /app/certs/prod-ca-2021.crt && test -r /app/certs/prod-ca-2021.crt
+RUN set -eu; \
+    id; \
+    ls -ld /app /app/certs; \
+    stat -c '%A (%a) %U:%G %s bytes %n' /app/certs/prod-ca-2021.crt; \
+    test "$(id -un)" = app || { echo 'ERROR: certificate validation must run as app' >&2; exit 1; }; \
+    test -x /app && test -x /app/certs || { echo 'ERROR: app cannot traverse certificate directories' >&2; exit 1; }; \
+    test -f /app/certs/prod-ca-2021.crt && test -s /app/certs/prod-ca-2021.crt || { echo 'ERROR: certificate is missing, not a regular file or empty' >&2; exit 1; }; \
+    test -r /app/certs/prod-ca-2021.crt || { echo 'ERROR: app cannot read certificate' >&2; exit 1; }; \
+    test "$(stat -c '%a' /app/certs/prod-ca-2021.crt)" = 444 && test ! -w /app/certs/prod-ca-2021.crt || { echo 'ERROR: certificate must be read-only (0444)' >&2; exit 1; }; \
+    echo 'OK: app can read the non-empty certificate; mode is 0444'
 EXPOSE 10000
 # No shell wrapper, EF tools, startup migration or secret; only the public CA.
 ENTRYPOINT ["dotnet", "SeenIt.Api.dll"]

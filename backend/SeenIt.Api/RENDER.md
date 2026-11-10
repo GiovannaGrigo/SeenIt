@@ -128,8 +128,11 @@ outros `.crt`, `.cer`, `.pem`, `.key`, `.pfx`, `.p12`, `.env` e configurações
 sensíveis continuam ativos. Não colocar outros arquivos nesse diretório.
 O estágio final copia a CA para `/app/certs/prod-ca-2021.crt` com modo `0444`
 (root proprietário; leitura para `app`, sem escrita). O diretório criado pelo
-COPY permite travessia. O `RUN test -s ... && test -r ...`, herdando `USER app`,
-faz o build falhar se o arquivo estiver vazio ou ilegível pelo usuário não-root.
+runtime-base é criado explicitamente com modo `0755` antes de `USER app`;
+não depender da criação implícita pelo `COPY --chmod=0444`, que pode deixar
+diretórios novos sem travessia. O `RUN` de validação, herdando `USER app`,
+mostra identidade, permissões dos diretórios, modo, proprietário e tamanho do
+certificado; exige arquivo regular não vazio, legível e sem escrita, com `0444`.
 Não é necessário instalar essa CA globalmente no sistema operacional.
 
 No painel Render, editar **o valor** de `ConnectionStrings__DefaultConnection`,
