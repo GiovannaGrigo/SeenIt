@@ -177,27 +177,20 @@ auth.MapPost("/register", async (
     HttpContext httpContext,
     CancellationToken cancellationToken) =>
 {
-    if (string.IsNullOrWhiteSpace(request.Name) ||
-        !MailAddress.TryCreate(request.Email, out _) ||
-        request.Password.Length < 8)
-        return Results.ValidationProblem(new Dictionary<string, string[]>
-        {
-            ["register"] = ["Informe nome, e-mail válido e uma senha com pelo menos 8 caracteres."]
-        });
-
-    var email = request.Email.Trim().ToLowerInvariant();
+    // The registration filter validates and normalizes before this handler runs.
+    var email = request.Email!;
     if (await database.Users.AnyAsync(x => x.Email == email, cancellationToken))
         return Results.Conflict(new { message = "Já existe uma conta com este e-mail." });
 
-    var user = new User { Name = request.Name.Trim(), Email = email, PasswordHash = string.Empty };
-    user.PasswordHash = hasher.HashPassword(user, request.Password);
+    var user = new User { Name = request.Name!, Email = email, PasswordHash = string.Empty };
+    user.PasswordHash = hasher.HashPassword(user, request.Password!);
     database.Users.Add(user);
     await database.SaveChangesAsync(cancellationToken);
 
     var token = tokens.Create(user);
     return Results.Created("/api/auth/me", new AuthResponse(
         token.Token, token.ExpiresAtUtc, new UserResponse(user.Id, user.Name, user.Email, avatarStorage.GetPublicUrl(user.Id, user.AvatarFileName, httpContext.Request))));
-});
+}).AddEndpointFilter<RegisterValidationFilter>();
 
 auth.MapPost("/login", async (LoginRequest request, AppDbContext database, IPasswordHasher<User> hasher, TokenService tokens,
     HttpContext httpContext, IAvatarStorageService avatarStorage, CancellationToken cancellationToken) =>

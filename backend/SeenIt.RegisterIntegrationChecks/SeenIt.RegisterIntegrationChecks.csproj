@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../SeenIt.Api/SeenIt.Api.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Explicit root: this repository has no solution file for factory discovery. -->
+    <AssemblyAttribute Include="Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryContentRootAttribute">
+      <_Parameter1>SeenIt.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</_Parameter1>
+      <_Parameter2>$(MSBuildProjectDirectory)/../SeenIt.Api</_Parameter2>
+      <_Parameter3>SeenIt.Api.csproj</_Parameter3>
+      <_Parameter4>0</_Parameter4>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

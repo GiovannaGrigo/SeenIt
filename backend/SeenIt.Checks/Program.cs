@@ -31,3 +31,4 @@ var big = WatchTimeCalculator.Calculate([new(now, int.MaxValue), new(now, int.Ma
 Check(big.TotalMinutes == 2L * int.MaxValue && big.Days[3].Minutes == big.TotalMinutes, "Aggregations must avoid integer overflow.");
 Console.WriteLine("Watch time checks passed: totals, empty history, unknown durations, timezone boundaries, week rollover and overflow.");
 await AnimeClassificationChecks.RunAsync();
+await RegisterValidationChecks.RunAsync();

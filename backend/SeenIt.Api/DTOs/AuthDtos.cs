@@ -2,10 +2,10 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SeenIt.Api.DTOs;
 
-public sealed record RegisterRequest(
-    [Required, MaxLength(120)] string Name,
-    [Required, EmailAddress, MaxLength(200)] string Email,
-    [Required, MinLength(8), MaxLength(100)] string Password);
+public sealed partial record RegisterRequest(
+    [Required, MaxLength(120)] string? Name,
+    [Required, EmailAddress, MaxLength(200)] string? Email,
+    [Required, MinLength(8), MaxLength(128)] string? Password);
 
 public sealed record LoginRequest(
     [Required, EmailAddress] string Email,
