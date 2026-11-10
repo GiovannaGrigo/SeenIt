@@ -5,7 +5,8 @@
   "scripts": {
     "start": "ng serve",
     "build": "ng build",
-    "test": "ng test"
+    "test": "ng test",
+    "check:rate-limiting": "node checks/rate-limiting.cjs"
   },
   "dependencies": {
     "@angular/animations": "21.2.23",

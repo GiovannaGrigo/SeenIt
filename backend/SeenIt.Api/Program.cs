@@ -1,3 +1,4 @@
+using SeenIt.Api.RateLimiting;
 using System.Security.Claims;
 using System.Net.Mail;
 using System.Net;
@@ -92,6 +93,7 @@ if (proxyAddresses.Length > 0)
     });
 }
 
+builder.Services.AddAbuseProtection(builder.Configuration);
 builder.Services.AddOpenApi();
 builder.Services.AddAvatarStorage(builder.Configuration, builder.Environment);
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -128,7 +130,7 @@ builder.Services.AddAuthorization();
 builder.Services.AddCors(options => options.AddPolicy("Frontend", policy =>
 {
     if (allowedOrigins.Length > 0) policy.WithOrigins(allowedOrigins);
-    policy.AllowAnyHeader().AllowAnyMethod();
+    policy.AllowAnyHeader().AllowAnyMethod().WithExposedHeaders("Retry-After");
 }));
 
 builder.Services
@@ -160,11 +162,13 @@ if (proxyAddresses.Length > 0) app.UseForwardedHeaders();
 app.UseWhen(context => !context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase),
     branch => branch.UseHttpsRedirection());
 app.UseStaticFiles();
+app.UseRouting();
 app.UseCors("Frontend");
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
-app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
+app.MapGet("/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous().DisableRateLimiting();
 
 var auth = app.MapGroup("/api/auth").WithTags("Autenticação");
 
@@ -190,7 +194,7 @@ auth.MapPost("/register", async (
     var token = tokens.Create(user);
     return Results.Created("/api/auth/me", new AuthResponse(
         token.Token, token.ExpiresAtUtc, new UserResponse(user.Id, user.Name, user.Email, avatarStorage.GetPublicUrl(user.Id, user.AvatarFileName, httpContext.Request))));
-}).AddEndpointFilter<RegisterValidationFilter>();
+}).AddEndpointFilter<RegisterValidationFilter>().RequireRateLimiting(AbuseProtection.Register);
 
 auth.MapPost("/login", async (LoginRequest request, AppDbContext database, IPasswordHasher<User> hasher, TokenService tokens,
     HttpContext httpContext, IAvatarStorageService avatarStorage, CancellationToken cancellationToken) =>
@@ -253,9 +257,9 @@ auth.MapPost("/login", async (LoginRequest request, AppDbContext database, IPass
             )
         )
     );
-});
+}).RequireRateLimiting(AbuseProtection.Login);
 
-var series = app.MapGroup("/api/series").WithTags("Catálogo");
+var series = app.MapGroup("/api/series").WithTags("Catálogo").RequireRateLimiting(AbuseProtection.Catalog);
 
 series.MapGet("/search", async (string q, TvMazeClient client, CancellationToken cancellationToken) =>
 {
@@ -275,7 +279,7 @@ series.MapGet("/{id:int}/episodes", async (int id, TvMazeClient client, Cancella
 
 var mySeries = app.MapGroup("/api/my-series")
     .RequireAuthorization()
-    .WithTags("Minha lista");
+    .WithTags("Minha lista").RequireRateLimiting(AbuseProtection.Mutation);
 
 mySeries.MapGet("/", async (
     SeriesStatus? status,
@@ -294,7 +298,7 @@ mySeries.MapGet("/", async (
     if (database.ChangeTracker.HasChanges())
         await database.SaveChangesAsync(cancellationToken);
     return Results.Ok(items.Select(ToResponse));
-});
+}).RequireRateLimiting(AbuseProtection.Expensive);
 
 mySeries.MapPost("/", async (
     AddSeriesRequest request,

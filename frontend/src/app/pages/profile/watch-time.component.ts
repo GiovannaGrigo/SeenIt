@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { finalize } from 'rxjs';
 import { ProfileService, WatchTimeResponse } from '../../core/profile.service';
 import { describeMinutes, formatWatchTime, watchTimeBarHeight } from './watch-time.utils';
+import { httpErrorMessage } from '../../core/http-error';
 
 @Component({
   selector: 'app-watch-time',
@@ -13,6 +14,7 @@ export class WatchTimeComponent implements OnInit {
   private readonly profileService = inject(ProfileService);
   readonly loading = signal(true);
   readonly error = signal(false);
+  readonly errorMessage = signal('');
   readonly data = signal<WatchTimeResponse | null>(null);
   readonly total = computed(() => formatWatchTime(this.data()?.totalMinutes ?? 0));
   readonly fullTotal = computed(() => describeMinutes(this.data()?.totalMinutes ?? 0));
@@ -42,7 +44,7 @@ export class WatchTimeComponent implements OnInit {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: data => this.data.set(data),
-        error: () => this.error.set(true),
+        error: error => { this.errorMessage.set(httpErrorMessage(error)); this.error.set(true); },
       });
   }
 }

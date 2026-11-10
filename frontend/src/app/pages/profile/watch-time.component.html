@@ -4,7 +4,7 @@
     @if (loading()) {
       <p class="status" role="status">Calculando seu tempo assistido…</p>
     } @else if (error()) {
-      <p class="status" role="status">Não foi possível carregar seu tempo assistido.</p>
+      <p class="status" role="alert">{{ errorMessage() }}</p>
       <button type="button" class="retry" (click)="load()">Tentar novamente</button>
     } @else {
       <p class="total" [title]="fullTotal() + ' no total. Cada mês equivale a 30 dias.'">

@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { ActivatedRoute, RouterLink } from "@angular/router";
-import { forkJoin } from "rxjs";
+import { catchError, finalize, forkJoin, Observable, of, tap } from "rxjs";
 import { SeriesService } from "../../core/series.service";
 import {
   Episode,
@@ -13,6 +13,7 @@ import { EpisodioAssistidoService } from "../../core/episodio-assistido.service"
 import { EpisodioModalComponent } from "../../shared/episodio-modal/episodio-modal.component";
 import { NotificationService } from "../../core/notification.service";
 import { SelectModule } from "primeng/select";
+import { httpErrorMessage } from '../../core/http-error';
 
 @Component({
   standalone: true,
@@ -34,7 +35,13 @@ export class SeriesDetailComponent implements OnInit {
   readonly episodes = signal<Episode[]>([]);
   readonly selectedSeason = signal(1);
   readonly savedStatus = signal<SeriesStatus | null>(null);
-  readonly loading = signal(true);
+  readonly loading = signal(false);
+  readonly readErrors = signal<string[]>([]);
+  readonly assistidosError = signal<string | null>(null);
+  readonly assistidosReady = signal(false);
+  readonly listReady = signal(false);
+  readonly episodesReady = signal(false);
+  readonly savingStatus = signal(false);
   readonly seasons = computed(() =>
     [...new Set(this.episodes().map((x) => x.season))].sort((a, b) => a - b),
   );
@@ -51,7 +58,7 @@ export class SeriesDetailComponent implements OnInit {
   readonly episodioSalvando = signal<number | null>(null);
   readonly temporadaSalvando = signal<number | null>(null);
   readonly desmarcandoTemporada = signal(false);
-  readonly carregandoAssistidos = signal(true);
+  readonly carregandoAssistidos = signal(false);
   readonly temporadaAssistida = computed(() =>
     this.seasonEpisodes().length > 0 &&
     this.seasonEpisodes().every((ep) => this.foiAssistido(ep.id)),
@@ -80,46 +87,50 @@ export class SeriesDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  load(): void {
+    if (this.loading()) return;
+    this.loading.set(true);
+    this.readErrors.set([]);
     const id = Number(this.route.snapshot.paramMap.get("id"));
-
+    // Catch each read independently; one 429 must not discard other responses.
+    const read = <T>(source: Observable<T>, success: (value: T) => void, failed?: () => void) => source.pipe(
+      tap(success),
+      catchError(error => {
+        failed?.();
+        this.readErrors.update(errors => [...errors, httpErrorMessage(error)]);
+        return of(null);
+      }),
+    );
     forkJoin({
-      series: this.service.getDetails(id),
-      episodes: this.service.getEpisodes(id),
-      mine: this.service.getMySeries(),
-    }).subscribe({
-      next: (result) => {
-        this.series.set(result.series);
-        this.episodes.set(result.episodes);
-        this.selectedSeason.set(this.seasons()[0] ?? 1);
-
-        this.savedStatus.set(
-          result.mine.find((item) => item.externalSeriesId === id)?.status ??
-            null,
-        );
-
-        this.carregarEpisodiosAssistidos(id);
-
-        this.loading.set(false);
-      },
-
-      error: (error) => {
-        console.error("Erro ao carregar detalhes da série:", error);
-
-        this.loading.set(false);
-      },
+      series: read(this.service.getDetails(id, true), value => this.series.set(value)),
+      episodes: read(this.service.getEpisodes(id, true), value => {
+        this.episodes.set(value);
+        this.episodesReady.set(true);
+        if (!this.seasons().includes(this.selectedSeason())) this.selectedSeason.set(this.seasons()[0] ?? 1);
+      }, () => this.episodesReady.set(false)),
+      mine: read(this.service.getMySeries(undefined, true), value => {
+        this.savedStatus.set(value.find(item => item.externalSeriesId === id)?.status ?? null);
+        this.listReady.set(true);
+      }, () => this.listReady.set(false)),
+    }).pipe(finalize(() => this.loading.set(false))).subscribe({
+      next: () => this.carregarEpisodiosAssistidos(id),
     });
   }
 
   save(status: SeriesStatus): void {
     const series = this.series();
 
-    if (!series) {
+    if (!series || !this.listReady() || this.savingStatus()) {
       return;
     }
 
     const jaEstavaNaLista = this.savedStatus() !== null;
 
-    this.service.add(series, status).subscribe({
+    this.savingStatus.set(true);
+    this.service.add(series, status).pipe(finalize(() => this.savingStatus.set(false))).subscribe({
       next: () => {
         this.savedStatus.set(status);
         this.statusControl.reset();
@@ -141,10 +152,7 @@ export class SeriesDetailComponent implements OnInit {
         }
       },
 
-      error: (error) => {
-        console.error("Erro ao atualizar status:", error);
-        this.notification.error("Não foi possível atualizar o status. Tente novamente.");
-      },
+      error: () => {}, // The interceptor owns write-error notifications.
     });
   }
 
@@ -161,7 +169,7 @@ export class SeriesDetailComponent implements OnInit {
   }
 
   abrirModal(episodio: Episode): void {
-    if (this.temporadaSalvando() !== null) return;
+    if (this.temporadaSalvando() !== null || !this.assistidosReady() || this.carregandoAssistidos() || this.assistidosError()) return;
     this.episodioSelecionado.set(episodio);
   }
 
@@ -196,38 +204,52 @@ export class SeriesDetailComponent implements OnInit {
       return;
     }
 
-    this.service.getMySeries().subscribe({
+    this.service.getMySeries(undefined, true).subscribe({
       next: (series) => {
         const minhaSerie = series.find(
           (item) => item.externalSeriesId === serie.id,
         );
 
         this.savedStatus.set(minhaSerie?.status ?? null);
+        this.listReady.set(true);
+      },
+      error: error => {
+        this.listReady.set(false);
+        this.readErrors.update(errors => [...errors, httpErrorMessage(error)]);
       },
     });
   }
 
   private carregarEpisodiosAssistidos(seriesId: number): void {
+    if (this.carregandoAssistidos()) return;
     this.carregandoAssistidos.set(true);
-    this.episodioAssistidoService.obterAssistidosPorSerie(seriesId).subscribe({
+    this.assistidosError.set(null);
+    this.episodioAssistidoService.obterAssistidosPorSerie(seriesId, true)
+      .pipe(finalize(() => this.carregandoAssistidos.set(false))).subscribe({
       next: (registros) => {
         this.episodiosAssistidos.set(
           new Map(
             registros.map((registro) => [registro.externalEpisodeId, registro]),
           ),
         );
-        this.carregandoAssistidos.set(false);
+        this.assistidosReady.set(true);
       },
-      error: (error) => {
-        console.error("Erro ao carregar episódios assistidos:", error);
+      error: error => {
+        this.assistidosReady.set(false);
+        this.assistidosError.set(httpErrorMessage(error));
       },
     });
+  }
+
+  retryAssistidos(): void {
+    const id = Number(this.route.snapshot.paramMap.get('id'));
+    this.carregarEpisodiosAssistidos(id);
   }
 
   alternarTemporadaAssistida(): void {
     const serie = this.series();
     const temporada = this.selectedSeason();
-    if (!serie || this.carregandoAssistidos() ||
+    if (!serie || !this.assistidosReady() || this.carregandoAssistidos() || this.assistidosError() || !this.episodesReady() ||
         !this.seasonEpisodes().length || this.temporadaSalvando() !== null ||
         this.episodioSalvando() !== null || this.episodioSelecionado()) return;
 
@@ -237,7 +259,7 @@ export class SeriesDetailComponent implements OnInit {
     const operacao = desmarcar
       ? this.episodioAssistidoService.desmarcarTemporada(serie.id, temporada)
       : this.episodioAssistidoService.marcarTemporadaComoAssistida(serie.id, temporada);
-    operacao
+    operacao.pipe(finalize(() => this.temporadaSalvando.set(null)))
       .subscribe({
         next: (registros) => {
           this.episodiosAssistidos.set(new Map(
@@ -256,7 +278,6 @@ export class SeriesDetailComponent implements OnInit {
           this.temporadaSalvando.set(null);
           this.carregarEpisodiosAssistidos(serie.id);
           this.atualizarStatusSalvo();
-          this.notification.error("Não foi possível atualizar a temporada. Tente novamente.");
         },
       });
   }
@@ -264,7 +285,7 @@ export class SeriesDetailComponent implements OnInit {
   marcarRapidamenteComoAssistido(episodio: Episode, event: MouseEvent): void {
     event.stopPropagation();
 
-    if (this.foiAssistido(episodio.id) || this.temporadaSalvando() !== null || this.carregandoAssistidos()) {
+    if (!this.assistidosReady() || this.foiAssistido(episodio.id) || this.episodioSalvando() !== null || this.temporadaSalvando() !== null || this.carregandoAssistidos() || this.assistidosError()) {
       return;
     }
 
@@ -288,6 +309,7 @@ export class SeriesDetailComponent implements OnInit {
 
     this.episodioAssistidoService
       .marcarComoAssistido(episodio.id, request)
+      .pipe(finalize(() => this.episodioSalvando.set(null)))
       .subscribe({
         next: (registro) => {
           this.episodioSalvando.set(null);
@@ -300,11 +322,7 @@ export class SeriesDetailComponent implements OnInit {
           );
         },
 
-        error: (error) => {
-          this.episodioSalvando.set(null);
-
-          console.error("Erro ao marcar episódio como assistido:", error);
-        },
+        error: () => {}, // Finalize releases the action; the interceptor displays the error.
       });
   }
 }

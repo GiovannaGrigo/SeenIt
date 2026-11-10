@@ -3,6 +3,7 @@ import { HttpClient } from "@angular/common/http";
 import { tap } from "rxjs";
 import { AuthResponse, User } from "../models/auth.models";
 import { environment } from "../../environments/environment";
+import { localErrorContext } from './http-error';
 
 @Injectable({ providedIn: "root" })
 export class AuthService {
@@ -34,7 +35,7 @@ export class AuthService {
       .post<AuthResponse>(`${this.apiUrl}/login`, {
         email,
         password,
-      })
+      }, { context: localErrorContext() })
       .pipe(tap((response) => this.saveSession(response)));
   }
 
@@ -44,7 +45,7 @@ export class AuthService {
         name,
         email,
         password,
-      })
+      }, { context: localErrorContext() })
       .pipe(tap((response) => this.saveSession(response)));
   }
 

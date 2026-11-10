@@ -1,4 +1,4 @@
-try { await RegistrationIntegrationChecks.RunAsync(); }
+try { await RegistrationIntegrationChecks.RunAsync(); await RateLimitingChecks.RunAsync(); await RateLimitingRegressionChecks.RunAsync(); }
 catch (Exception error)
 {
     Console.Error.WriteLine(error);

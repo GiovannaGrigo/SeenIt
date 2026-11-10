@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.RateLimiting;
+using SeenIt.Api.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -13,6 +15,7 @@ namespace SeenIt.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[EnableRateLimiting(AbuseProtection.Mutation)]
 [Route("api/profile")]
 public sealed class ProfileController(
     AppDbContext database,
@@ -23,6 +26,7 @@ public sealed class ProfileController(
     : ControllerBase
 {
     [HttpGet]
+    [EnableRateLimiting(AbuseProtection.Read)]
     [ProducesResponseType<ProfileResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ProfileResponse>> GetProfile(CancellationToken cancellationToken)
@@ -43,6 +47,7 @@ public sealed class ProfileController(
     }
 
     [HttpGet("watch-time")]
+    [EnableRateLimiting(AbuseProtection.Expensive)]
     public async Task<ActionResult<WatchTimeResponse>> GetWatchTime(
         [FromQuery] string timeZone,
         [FromServices] WatchTimeService watchTime,
@@ -64,6 +69,7 @@ public sealed class ProfileController(
     }
 
     [HttpGet("stats")]
+    [EnableRateLimiting(AbuseProtection.Read)]
     public async Task<IActionResult> GetStats(CancellationToken cancellationToken)
     {
         var userId = currentUser.UserId;
@@ -184,6 +190,7 @@ public sealed class ProfileController(
     }
 
     [HttpPut("avatar")]
+    [EnableRateLimiting(AbuseProtection.Avatar)]
     [RequestSizeLimit(AvatarImageProcessor.MaxRequestBytes)]
     [RequestFormLimits(MultipartBodyLengthLimit = AvatarImageProcessor.MaxFileBytes)]
     [ProducesResponseType<ProfileResponse>(StatusCodes.Status200OK)]

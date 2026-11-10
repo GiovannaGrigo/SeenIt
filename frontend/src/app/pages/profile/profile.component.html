@@ -1,4 +1,10 @@
 <section class="profile-page" aria-label="Personalizar perfil">
+  @if (profileError(); as message) {
+    <div role="alert">{{ message }} <button type="button" [disabled]="loadingProfile()" (click)="loadProfile()">Tentar carregar perfil novamente</button></div>
+  }
+  @if (statsError(); as message) {
+    <div role="alert">{{ message }} <button type="button" [disabled]="loadingStats()" (click)="loadStats()">Tentar carregar estatísticas novamente</button></div>
+  }
   <header class="profile-summary">
     <div class="profile-banner" aria-hidden="true"></div>
     <div class="summary-content">
@@ -16,7 +22,7 @@
         <input #avatarInput type="file" accept="image/png,image/jpeg,image/webp" hidden (change)="selectAvatar($event)" />
         <div class="identity-copy">
           <p class="eyebrow">Sua conta</p>
-          <h1>{{ profile()?.name || 'Carregando perfil…' }}</h1>
+          <h1>{{ profile()?.name || (loadingProfile() ? 'Carregando perfil…' : 'Perfil indisponível') }}</h1>
           <p class="profile-email">{{ profile()?.email }}</p>
           @if (profile()?.avatarUrl) {
             <button type="button" class="remove-avatar" [disabled]="uploadingAvatar()" (click)="deleteAvatar()">Remover foto</button>

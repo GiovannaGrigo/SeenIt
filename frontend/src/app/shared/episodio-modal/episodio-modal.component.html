@@ -1,4 +1,4 @@
-<div class="modal-backdrop" (click)="fechar.emit()">
+<div class="modal-backdrop" (click)="solicitarFechamento()">
   <section
     class="modal"
     role="dialog"
@@ -11,7 +11,8 @@
       class="close"
       aria-label="Fechar modal"
       title="Fechar"
-      (click)="fechar.emit()"
+      [disabled]="salvando()"
+      (click)="solicitarFechamento()"
     >
       <i class="pi pi-times" aria-hidden="true"></i>
     </button>
@@ -42,6 +43,7 @@
                 class="feeling-button"
                 [class.selected]="sentimentoSelecionado(sentimento.valor)"
                 [attr.aria-pressed]="sentimentoSelecionado(sentimento.valor)"
+                [disabled]="salvando()"
                 (click)="alternarSentimento(sentimento.valor)"
               >
                 <span class="feeling-emoji">
@@ -82,6 +84,7 @@
                   [attr.aria-pressed]="
                     personagemSelecionado(personagem.externalCharacterId)
                   "
+                  [disabled]="salvando()"
                   (click)="selecionarPersonagem(personagem.externalCharacterId)"
                 >
                   <div class="character-photo">
@@ -132,6 +135,7 @@
               <h3>Favoritos deste episódio</h3>
             </div>
 
+            @if (!carregandoVotacao() && !erroVotacao()) {
             <div class="votes">
               @for (voto of votacao(); track voto.externalCharacterId) {
                 <div class="vote">
@@ -163,6 +167,7 @@
                 </div>
               }
             </div>
+            }
           </section>
         }
 
@@ -178,20 +183,30 @@
           </p>
         }
 
+        @if (carregandoVotacao()) {
+          <p class="feedback-message" role="status">Atualizando votação...</p>
+        }
+        @if (erroVotacao(); as message) {
+          <div class="feedback-message error" role="alert">
+            <p>Não foi possível atualizar a votação. {{ message }}</p>
+            <button type="button" class="secondary" [disabled]="carregandoVotacao() || salvando()" (click)="repetirVotacao()">Tentar novamente a votação</button>
+          </div>
+        }
+
         <footer class="actions">
-          <button type="button" class="secondary" (click)="fechar.emit()">
+          <button type="button" class="secondary" [disabled]="salvando()" (click)="solicitarFechamento()">
             Fechar
           </button>
 
           <button
             type="button"
             class="primary"
-            [disabled]="form.invalid || salvando()"
+            [disabled]="!podeSalvar()"
             (click)="salvar()"
           >
             @if (salvando()) {
               Salvando...
-            } @else if (registroAtual()) {
+            } @else if (registroAtual() || salvoComSucesso()) {
               Atualizar avaliação
             } @else {
               <i class="pi pi-check" aria-hidden="true"></i> Marcar como assistido

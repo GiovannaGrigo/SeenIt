@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
   HostListener,
   OnInit,
@@ -12,11 +13,13 @@ import {
 
 import { RouterLink } from "@angular/router";
 import { NgTemplateOutlet } from "@angular/common";
-import { finalize } from "rxjs";
+import { finalize, take } from "rxjs";
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import { SeriesService } from "../../core/series.service";
 import { SeriesStatus, UserSeries } from "../../models/series.models";
 import { NotificationService } from "../../core/notification.service";
+import { httpErrorMessage } from '../../core/http-error';
 
 @Component({
   standalone: true,
@@ -26,6 +29,7 @@ import { NotificationService } from "../../core/notification.service";
 })
 export class LibraryComponent implements OnInit {
   private readonly notification = inject(NotificationService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly SeriesStatus = SeriesStatus;
   readonly items = signal<UserSeries[]>([]);
   readonly sortedItems = computed(() =>
@@ -33,7 +37,10 @@ export class LibraryComponent implements OnInit {
       a.name.localeCompare(b.name, "pt-BR", { sensitivity: "base" }),
     ),
   );
-  readonly loading = signal(true);
+  readonly loading = signal(false);
+  readonly loaded = signal(false);
+  readonly loadError = signal<string | null>(null);
+  readonly ready = computed(() => this.loaded() && !this.loading() && !this.loadError());
   readonly filter = signal<SeriesStatus | null>(null);
   readonly seriesItems = computed(() => this.sortedItems().filter((item) => !item.isAnime));
   readonly animeItems = computed(() => this.sortedItems().filter((item) => item.isAnime));
@@ -150,18 +157,19 @@ export class LibraryComponent implements OnInit {
   }
 
   load(): void {
+    if (this.loading() || this.destroyRef.destroyed) return;
     this.loading.set(true);
+    this.loadError.set(null);
 
     this.seriesService
-      .getMySeries()
-      .pipe(finalize(() => this.loading.set(false)))
+      .getMySeries(undefined, true)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef), finalize(() => this.loading.set(false)))
       .subscribe({
         next: (items) => {
           this.items.set(items);
+          this.loaded.set(true);
         },
-        error: (error) => {
-          console.error("Erro ao carregar a lista de séries:", error);
-        },
+        error: error => this.loadError.set(httpErrorMessage(error)),
       });
   }
 

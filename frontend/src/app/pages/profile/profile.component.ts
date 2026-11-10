@@ -13,6 +13,7 @@ import { ProfileResponse, ProfileService } from "../../core/profile.service";
 import { Router } from "@angular/router";
 import { NotificationService } from "../../core/notification.service";
 import { WatchTimeComponent } from "./watch-time.component";
+import { httpErrorMessage } from '../../core/http-error';
 
 @Component({
   selector: "app-profile",
@@ -27,6 +28,10 @@ export class ProfileComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly notification = inject(NotificationService);
   readonly profile = signal<ProfileResponse | null>(null);
+  readonly loadingProfile = signal(false);
+  readonly loadingStats = signal(false);
+  readonly profileError = signal<string | null>(null);
+  readonly statsError = signal<string | null>(null);
   readonly uploadingAvatar = signal(false);
   readonly savingProfile = signal(false);
   readonly deleteModalOpen = signal(false);
@@ -89,7 +94,7 @@ export class ProfileComponent implements OnInit {
           this.closePasswordModal();
           this.notification.success('Sua senha foi atualizada.', 'Senha atualizada');
         },
-        error: error => this.passwordError.set(error.error?.message ?? 'Não foi possível alterar sua senha. Tente novamente.'),
+        error: error => this.passwordError.set(httpErrorMessage(error)),
       });
   }
 
@@ -107,7 +112,17 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadProfile();
-    this.profileService.getStats().subscribe({ next: stats => this.stats.set(stats) });
+    this.loadStats();
+  }
+
+  loadStats(): void {
+    if (this.loadingStats()) return;
+    this.loadingStats.set(true);
+    this.statsError.set(null);
+    this.profileService.getStats(true).pipe(finalize(() => this.loadingStats.set(false))).subscribe({
+      next: stats => this.stats.set(stats),
+      error: error => this.statsError.set(httpErrorMessage(error)),
+    });
   }
 
   selectAvatar(event: Event): void {
@@ -141,6 +156,7 @@ export class ProfileComponent implements OnInit {
             "Foto atualizada",
           );
         },
+        error: () => {}, // The interceptor owns this error.
       });
   }
 
@@ -175,6 +191,7 @@ export class ProfileComponent implements OnInit {
             "Perfil atualizado",
           );
         },
+        error: () => {},
       });
   }
 
@@ -207,12 +224,16 @@ export class ProfileComponent implements OnInit {
             "Sua foto de perfil foi removida.",
             "Foto removida",
           );
-        }
+        },
+        error: () => {},
       });
   }
 
-  private loadProfile(): void {
-    this.profileService.getProfile().subscribe({
+  loadProfile(): void {
+    if (this.loadingProfile()) return;
+    this.loadingProfile.set(true);
+    this.profileError.set(null);
+    this.profileService.getProfile(true).pipe(finalize(() => this.loadingProfile.set(false))).subscribe({
       next: (profile) => {
         this.profile.set(profile);
 
@@ -222,7 +243,8 @@ export class ProfileComponent implements OnInit {
           name: profile.name,
           avatarUrl: profile.avatarUrl,
         });
-      }
+      },
+      error: error => this.profileError.set(httpErrorMessage(error)),
     });
   }
 
@@ -265,8 +287,7 @@ export class ProfileComponent implements OnInit {
         },
         error: (error) => {
           this.deleteAccountError.set(
-            error.error?.message ??
-              "Não foi possível excluir sua conta. Tente novamente.",
+            httpErrorMessage(error),
           );
         },
       });

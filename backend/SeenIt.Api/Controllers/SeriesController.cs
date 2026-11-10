@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.RateLimiting;
+using SeenIt.Api.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SeenIt.Api.DTOs.Series;
@@ -7,6 +9,7 @@ namespace SeenIt.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[EnableRateLimiting(AbuseProtection.Expensive)]
 [Route("api/series")]
 public sealed class SeriesController(
     ITvMazeService tvMazeService)

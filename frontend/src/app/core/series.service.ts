@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Episode, SeriesDetails, SeriesStatus, SeriesSummary, UserSeries } from '../models/series.models';
 import { environment } from '../../environments/environment';
+import { localErrorContext } from './http-error';
 
 @Injectable({ providedIn: 'root' })
 export class SeriesService {
@@ -14,11 +15,11 @@ export class SeriesService {
     });
   }
 
-  getDetails(id: number) { return this.http.get<SeriesDetails>(`${this.apiUrl}/series/${id}`); }
-  getEpisodes(id: number) { return this.http.get<Episode[]>(`${this.apiUrl}/series/${id}/episodes`); }
-  getMySeries(status?: SeriesStatus) {
+  getDetails(id: number, local = false) { return this.http.get<SeriesDetails>(`${this.apiUrl}/series/${id}`, { context: local ? localErrorContext() : undefined }); }
+  getEpisodes(id: number, local = false) { return this.http.get<Episode[]>(`${this.apiUrl}/series/${id}/episodes`, { context: local ? localErrorContext() : undefined }); }
+  getMySeries(status?: SeriesStatus, local = false) {
     const params = status ? new HttpParams().set('status', status) : undefined;
-    return this.http.get<UserSeries[]>(`${this.apiUrl}/my-series`, { params });
+    return this.http.get<UserSeries[]>(`${this.apiUrl}/my-series`, { params, context: local ? localErrorContext() : undefined });
   }
 
   add(series: SeriesSummary | SeriesDetails, status: SeriesStatus) {

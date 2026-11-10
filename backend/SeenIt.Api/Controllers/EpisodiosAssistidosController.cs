@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.RateLimiting;
+using SeenIt.Api.RateLimiting;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
@@ -9,6 +11,7 @@ namespace SeenIt.Api.Controllers;
 
 [ApiController]
 [Authorize]
+[EnableRateLimiting(AbuseProtection.Mutation)]
 [Route("api/episodios")]
 public sealed class EpisodiosAssistidosController(IEpisodioAssistidoService episodioAssistidoService) : ControllerBase
 {
@@ -80,6 +83,7 @@ public sealed class EpisodiosAssistidosController(IEpisodioAssistidoService epis
         return Ok(resultado);
     }
 
+    [EnableRateLimiting(AbuseProtection.Expensive)]
     [HttpGet("series/{externalSeriesId:int}")]
     [ProducesResponseType<IReadOnlyList<EpisodioAssistidoResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -100,6 +104,7 @@ public sealed class EpisodiosAssistidosController(IEpisodioAssistidoService epis
         return Ok(episodios);
     }
 
+    [EnableRateLimiting(AbuseProtection.Expensive)]
     [HttpGet("{externalEpisodeId:int}/votacao-personagens")]
     [ProducesResponseType<IReadOnlyList<VotacaoPersonagemResponse>>(StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<VotacaoPersonagemResponse>>> ObterVotacaoPersonagens([FromRoute] int externalEpisodeId, CancellationToken cancellationToken)

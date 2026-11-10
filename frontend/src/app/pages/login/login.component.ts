@@ -5,6 +5,7 @@ import { finalize } from "rxjs";
 import { AuthService } from "../../core/auth.service";
 import { ThemeService } from "../../core/theme.service";
 import { NotificationService } from "../../core/notification.service";
+import { httpErrorMessage } from '../../core/http-error';
 
 @Component({
   standalone: true,
@@ -31,6 +32,7 @@ export class LoginComponent {
   }
 
   submit(): void {
+    if (this.loading()) return;
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -60,8 +62,8 @@ export class LoginComponent {
               );
             });
         },
-        error: () => {
-          this.error.set("E-mail ou senha inválidos.");
+        error: (error) => {
+          this.error.set(httpErrorMessage(error, true));
         },
       });
   }

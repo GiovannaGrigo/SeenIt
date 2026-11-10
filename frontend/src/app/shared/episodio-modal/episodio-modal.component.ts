@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   inject,
   input,
   OnInit,
@@ -12,7 +13,8 @@ import {
   ReactiveFormsModule,
   Validators,
 } from "@angular/forms";
-import { finalize, forkJoin, map, switchMap } from "rxjs";
+import { catchError, concatMap, defer, finalize, forkJoin, of, take, tap } from "rxjs";
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 import {
   EpisodioAssistidoResponse,
@@ -23,6 +25,7 @@ import {
 import { EpisodioAssistidoService } from "../../core/episodio-assistido.service";
 import { Episode } from "../../models/series.models";
 import { NotificationService } from "../../core/notification.service";
+import { httpErrorMessage } from '../../core/http-error';
 
 @Component({
   selector: "app-episodio-modal",
@@ -34,6 +37,8 @@ import { NotificationService } from "../../core/notification.service";
 export class EpisodioModalComponent implements OnInit {
   private readonly service = inject(EpisodioAssistidoService);
   private readonly notification = inject(NotificationService);
+  private readonly destroyRef = inject(DestroyRef);
+  private savedSelection: string | null = null;
 
   readonly episodio = input.required<Episode>();
   readonly seriesId = input.required<number>();
@@ -51,6 +56,8 @@ export class EpisodioModalComponent implements OnInit {
   readonly salvando = signal(false);
   readonly mensagemErro = signal<string | null>(null);
   readonly salvoComSucesso = signal(false);
+  readonly carregandoVotacao = signal(false);
+  readonly erroVotacao = signal<string | null>(null);
 
   readonly sentimentos = [
     {
@@ -98,6 +105,7 @@ export class EpisodioModalComponent implements OnInit {
   }
 
   alternarSentimento(sentimento: SentimentoEpisodio): void {
+    if (this.salvando()) return;
     const sentimentosAtuais = this.form.controls.sentimentos.value;
 
     const jaSelecionado = sentimentosAtuais.includes(sentimento);
@@ -117,6 +125,7 @@ export class EpisodioModalComponent implements OnInit {
   }
 
   selecionarPersonagem(personagemId: number): void {
+    if (this.salvando()) return;
     this.form.controls.externalCharacterId.setValue(personagemId);
   }
 
@@ -125,11 +134,15 @@ export class EpisodioModalComponent implements OnInit {
   }
 
   salvar(): void {
+    if (this.carregando() || this.salvando() || this.carregandoVotacao() || this.destroyRef.destroyed) return;
     this.form.markAllAsTouched();
 
-    if (this.form.invalid || this.salvando()) {
+    if (this.form.invalid) {
+      this.mensagemErro.set("Selecione pelo menos uma emoção e um personagem.");
       return;
     }
+    const selection = this.selectionKey();
+    if (selection === this.savedSelection) return;
 
     const sentimentos = this.form.controls.sentimentos.value;
 
@@ -160,36 +173,55 @@ export class EpisodioModalComponent implements OnInit {
         sentimentos,
         externalCharacterId: personagem.externalCharacterId,
         personagemFavoritoNome: personagem.nome,
-      })
+      }, true)
       .pipe(
-        switchMap((registro) =>
-          this.service.obterVotacao(episodio.id).pipe(
-            map((votacao) => ({
-              registro,
-              votacao,
-            })),
-          ),
-        ),
+        take(1),
+        tap(registro => {
+          // A confirmed write is acknowledged before any follow-up read.
+          this.savedSelection = selection;
+          this.salvoComSucesso.set(true);
+          this.salvo.emit(registro);
+          this.notification.success(`${episodio.name} foi marcado como assistido.`, "Episódio assistido");
+        }),
+        concatMap(() => { this.salvando.set(false); return this.consultarVotacao(); }),
+        takeUntilDestroyed(this.destroyRef),
         finalize(() => this.salvando.set(false)),
       )
       .subscribe({
-        next: ({ registro, votacao }) => {
-          this.votacao.set(votacao);
-          this.salvoComSucesso.set(true);
-
-          this.salvo.emit(registro);
-
-          this.notification.success(
-            `${this.episodio().name} foi marcado como assistido.`,
-            "Episódio assistido",
-          );
-        },
-        error: () => {
-          this.mensagemErro.set(
-            "Selecione pelo menos uma emoção e um personagem.",
-          );
-        },
+        // consultarVotacao catches its own HTTP errors; only write failures reach here.
+        error: error => this.mensagemErro.set(httpErrorMessage(error)),
       });
+  }
+
+  podeSalvar(): boolean {
+    return this.form.valid && !this.carregando() && !this.salvando() && !this.carregandoVotacao()
+      && this.selectionKey() !== this.savedSelection;
+  }
+
+  solicitarFechamento(): void {
+    if (!this.salvando()) this.fechar.emit();
+  }
+
+  repetirVotacao(): void {
+    if (!this.erroVotacao() || this.carregando() || this.salvando() || this.carregandoVotacao() || this.destroyRef.destroyed) return;
+    this.consultarVotacao().pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+  }
+
+  private selectionKey(): string {
+    return JSON.stringify([this.form.controls.externalCharacterId.value, [...this.form.controls.sentimentos.value].sort()]);
+  }
+
+  private consultarVotacao() {
+    return defer(() => {
+      this.carregandoVotacao.set(true);
+      this.erroVotacao.set(null);
+      return this.service.obterVotacao(this.episodio().id, true);
+    }).pipe(
+      take(1),
+      tap(votacao => this.votacao.set(votacao)),
+      catchError(error => { this.erroVotacao.set(httpErrorMessage(error)); return of(null); }),
+      finalize(() => this.carregandoVotacao.set(false)),
+    );
   }
 
   private carregarDados(): void {
@@ -197,19 +229,17 @@ export class EpisodioModalComponent implements OnInit {
       personagens: this.service.obterPersonagens(
         this.seriesId(),
         this.episodio().id,
+        true,
       ),
 
-      votacao: this.service.obterVotacao(this.episodio().id),
+      votacao: this.consultarVotacao(),
     })
-      .pipe(finalize(() => this.carregando.set(false)))
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.carregando.set(false)))
       .subscribe({
         next: (resultado) => {
           this.personagens.set(resultado.personagens);
-          this.votacao.set(resultado.votacao);
         },
-        error: () => {
-          this.mensagemErro.set("Não foi possível carregar o modal.");
-        },
+        error: error => this.mensagemErro.set(httpErrorMessage(error)),
       });
   }
 

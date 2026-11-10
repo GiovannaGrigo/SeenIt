@@ -53,7 +53,14 @@
       <div class="skeleton"></div>
     }
   </div>
-} @else if (!visibleItems().length) {
+} @else if (loadError(); as message) {
+  <section class="empty-state" role="alert">
+    <i class="pi pi-exclamation-circle" aria-hidden="true"></i>
+    <h2>Não foi possível carregar sua biblioteca</h2>
+    <p>{{ message }}</p>
+    <button type="button" class="primary-link" [disabled]="loading()" (click)="load()">Tentar novamente</button>
+  </section>
+} @else if (ready() && !visibleItems().length) {
   <section class="empty-state">
     <i class="pi pi-inbox" aria-hidden="true"></i>
 
@@ -65,7 +72,7 @@
       <i class="pi pi-search" aria-hidden="true"></i> Explorar catálogo
     </a>
   </section>
-} @else {
+} @else if (ready()) {
   <div class="series-carousel">
     <button [hidden]="!listNavigation().previous" type="button" class="carousel-arrow previous" aria-label="Ver séries anteriores da minha lista" (click)="scrollSeries(mySeriesRow, -1)">
       <i class="pi pi-chevron-left" aria-hidden="true"></i>
@@ -81,7 +88,7 @@
   </div>
 }
 
-@if (!loading()) {
+@if (ready()) {
   <section class="favorites-section" aria-labelledby="favorites-heading">
     <h2 id="favorites-heading" class="section-heading">
       Séries Favoritas
@@ -114,7 +121,7 @@
   </section>
 }
 
-@if (!loading()) {
+@if (ready()) {
   <section class="favorites-section" aria-labelledby="anime-heading">
     <h2 id="anime-heading" class="section-heading">
       Animes
@@ -150,7 +157,7 @@
   </section>
 }
 
-@if (!loading()) {
+@if (ready()) {
   <section class="favorites-section" aria-labelledby="favorite-anime-heading">
     <h2 id="favorite-anime-heading" class="section-heading">
       Animes Favoritos

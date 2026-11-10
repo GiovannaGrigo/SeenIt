@@ -19,6 +19,10 @@ using SeenIt.Api.Services.Avatars;
 // actual entry point (Program.cs), including its middleware and route registration.
 internal sealed class RegistrationFactory : WebApplicationFactory<TokenService>
 {
+    public bool CheckRateLimiting { get; init; }
+    public int GlobalPerMinute { get; init; } = 10000;
+    public Dictionary<string, string> Settings { get; init; } = [];
+    public Action<IServiceCollection>? ExtraServices { get; init; }
     public SqliteConnection Connection { get; } = new("Data Source=:memory:");
     public DatabaseProbe Database { get; } = new();
     public ObservedHasher Hasher { get; } = new();
@@ -26,6 +30,10 @@ internal sealed class RegistrationFactory : WebApplicationFactory<TokenService>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Production");
+        builder.UseSetting("RateLimiting:GlobalPerMinute", GlobalPerMinute.ToString());
+        builder.UseSetting("RateLimiting:Register:PerMinute", CheckRateLimiting ? "2" : "10000");
+        builder.UseSetting("RateLimiting:Login:PerMinute", CheckRateLimiting ? "2" : "10000");
+        builder.UseSetting("RateLimiting:Mutation:PerMinute", "2");
         // Synthetic settings override ambient configuration; no production secrets required.
         builder.UseSetting("Jwt:Key", Convert.ToBase64String(Enumerable.Range(1, 32).Select(n => (byte)n).ToArray()));
         builder.UseSetting("Jwt:Issuer", "SeenIt.LocalChecks");
@@ -35,6 +43,7 @@ internal sealed class RegistrationFactory : WebApplicationFactory<TokenService>
         builder.UseSetting("SupabaseStorage:Url", "https://localchecksonly.supabase.co");
         builder.UseSetting("SupabaseStorage:SecretKey", "sb_secret_synthetic_local_checks_only");
         builder.UseSetting("SupabaseStorage:Bucket", "avatars");
+        foreach (var (key, value) in Settings) builder.UseSetting(key, value);
         builder.ConfigureLogging(logging => logging.ClearProviders());
         builder.ConfigureTestServices(services =>
         {
@@ -50,6 +59,7 @@ internal sealed class RegistrationFactory : WebApplicationFactory<TokenService>
             // Fail closed if a path unexpectedly tries to access an external HTTP service.
             services.RemoveAll<IHttpClientFactory>();
             services.AddSingleton<IHttpClientFactory, NoExternalHttp>();
+            ExtraServices?.Invoke(services);
         });
     }
 
@@ -76,9 +86,22 @@ internal sealed class ObservedHasher : IPasswordHasher<User>
 {
     private readonly PasswordHasher<User> inner = new();
     public int HashCalls { get; private set; }
-    public string HashPassword(User user, string password) { HashCalls++; return inner.HashPassword(user, password); }
-    public PasswordVerificationResult VerifyHashedPassword(User user, string hashedPassword, string providedPassword) =>
-        inner.VerifyHashedPassword(user, hashedPassword, providedPassword);
+    public int VerifyCalls { get; private set; }
+    public ManualResetEventSlim? HashGate { get; set; }
+    public TaskCompletionSource HashEntered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+    public string HashPassword(User user, string password)
+    {
+        HashCalls++;
+        HashEntered.TrySetResult();
+        if (HashGate is not null && !HashGate.Wait(TimeSpan.FromSeconds(15)))
+            throw new TimeoutException("Local hash gate timed out.");
+        return inner.HashPassword(user, password);
+    }
+    public PasswordVerificationResult VerifyHashedPassword(User user, string hashedPassword, string providedPassword)
+    {
+        VerifyCalls++;
+        return inner.VerifyHashedPassword(user, hashedPassword, providedPassword);
+    }
 }
 
 internal sealed class DatabaseProbe : DbCommandInterceptor, ISaveChangesInterceptor

@@ -1,4 +1,13 @@
-@if (loading()) {
+@if (readErrors().length) {
+  <div role="alert">
+    @for (message of readErrors(); track $index) { <p>{{ message }}</p> }
+    <button type="button" [disabled]="loading()" (click)="load()">Tentar carregar dados novamente</button>
+  </div>
+}
+@if (assistidosError(); as message) {
+  <div role="alert">{{ message }} <button type="button" [disabled]="carregandoAssistidos()" (click)="retryAssistidos()">Tentar carregar episódios assistidos novamente</button></div>
+}
+@if (loading() && !series()) {
   <p class="loading">Carregando detalhes...</p>
 } @else if (series(); as item) {
   <a class="back" routerLink="/explorar"
@@ -46,7 +55,7 @@
         />
         <button
           type="button"
-          [disabled]="statusControl.value === null || temporadaSalvando() !== null"
+          [disabled]="statusControl.value === null || temporadaSalvando() !== null || !listReady() || savingStatus()"
           (click)="save(statusControl.value!)"
         >
           Atualizar status
@@ -85,7 +94,7 @@
         <button
           type="button"
           class="quick-watch-button"
-          [disabled]="carregandoAssistidos() || temporadaSalvando() !== null || episodioSalvando() !== null"
+          [disabled]="!assistidosReady() || carregandoAssistidos() || assistidosError() !== null || !episodesReady() || temporadaSalvando() !== null || episodioSalvando() !== null"
           [attr.aria-busy]="temporadaSalvando() !== null"
           [attr.aria-describedby]="temporadaAssistida() ? 'season-unwatch-note' : null"
           (click)="alternarTemporadaAssistida()"
@@ -148,7 +157,7 @@
               <button
                 type="button"
                 class="quick-watch-button"
-                [disabled]="episodioSalvando() === ep.id || temporadaSalvando() !== null || carregandoAssistidos()"
+                [disabled]="!assistidosReady() || episodioSalvando() !== null || temporadaSalvando() !== null || carregandoAssistidos() || assistidosError() !== null"
                 (click)="marcarRapidamenteComoAssistido(ep, $event)"
                 aria-label="Marcar episódio como assistido"
               >
