@@ -58,3 +58,7 @@
 **/appsettings*.json
 **/wwwroot/uploads
 **/wwwroot/avatars
+
+# Public Supabase root CA only; keep all other certificate/key exclusions above.
+!backend/docker/certs/
+!backend/docker/certs/prod-ca-2021.crt

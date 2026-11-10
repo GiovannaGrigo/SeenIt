@@ -63,6 +63,8 @@ RUN test -f /app/libSkiaSharp.so \
 FROM runtime-base AS final
 COPY --from=build /out/api/ /app/
 COPY --from=verify /tmp/seenit-container-checks-passed /app/.container-checks-passed
+COPY --chmod=0444 backend/docker/certs/prod-ca-2021.crt /app/certs/prod-ca-2021.crt
+RUN test -s /app/certs/prod-ca-2021.crt && test -r /app/certs/prod-ca-2021.crt
 EXPOSE 10000
-# No shell wrapper, EF tools, startup migration, certificate or secret.
+# No shell wrapper, EF tools, startup migration or secret; only the public CA.
 ENTRYPOINT ["dotnet", "SeenIt.Api.dll"]

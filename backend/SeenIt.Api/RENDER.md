@@ -6,7 +6,7 @@ Preparação local, sem deploy. As três migrations já foram aplicadas no Supab
 
 - Dockerfile: `backend/SeenIt.Api/Dockerfile`.
 - Build context: raiz do repositório (`.`), não `backend/SeenIt.Api`.
-- `.dockerignore` da raiz usa allowlist para API, dois projetos de verificações e configuração sanitizada do container. Frontend, artifacts, bin/obj, node_modules, uploads, configurações locais, `.env`, certificados e secrets ficam fora do contexto.
+- `.dockerignore` da raiz usa allowlist para API, dois projetos de verificações e configuração sanitizada do container. Frontend, artifacts, bin/obj, node_modules, uploads, configurações locais, `.env`, certificados e secrets ficam fora do contexto, exceto a CA pública `backend/docker/certs/prod-ca-2021.crt`.
 - `backend/docker/runtime-settings.json` contém somente URL pública do TVmaze e níveis de logging. É copiado como `/app/appsettings.json`. **Nenhum `appsettings*.json` local é enviado ao build**, inclusive o arquivo com a conexão local.
 - O Dockerfile não declara `ARG` de segredo e não carrega User Secrets. O Render pode disponibilizar variáveis de ambiente também como build arguments: não adicionar referências a elas no Dockerfile. Não cadastrar secret files dentro dos caminhos permitidos do backend.
 
@@ -104,6 +104,90 @@ Em Production todos os parâmetros JWT, conexão não vazia e Supabase Storage v
 O container não contém os defaults locais de issuer/audience/expiração: preencher essas variáveis explicitamente. `SupabaseStorage__Enabled` não é necessário em Production, pois o código exige Storage persistente. A Secret API Key `sb_secret_` é enviada apenas em `apikey`, nunca como JWT ou URL. O bucket `avatars` precisa aceitar WebP e ter o limite esperado de 5 MiB. Rever [AVATAR_STORAGE.md](AVATAR_STORAGE.md), incluindo migração conservadora dos arquivos legados e monitoramento de limpeza pendente.
 
 No Render, `ConnectionStrings__DefaultConnection` é a configuração exclusiva do **processo remoto**. Não alterar a chave local no arquivo ou nos User Secrets, nem presumir que `SupabaseTest` será selecionada. O Dockerfile não conhece nenhuma dessas conexões. Nenhuma conexão real é usada no build ou smoke test.
+
+### TLS do Supabase Session Pooler (preparação em 10/11/2026)
+
+O provider `Npgsql.EntityFrameworkCore.PostgreSQL` é 10.0.0. `Program.cs` passa
+`GetConnectionString("DefaultConnection")` diretamente para `UseNpgsql`, sem
+callback personalizado de certificados. A mensagem de erro sobre callback pode
+vir da validação interna do driver; sozinha, não distingue CA ausente, cadeia
+incompleta, hostname incorreto ou certificado expirado. A inclusão abaixo resolve
+a disponibilidade da CA na imagem; o handshake real ainda precisa ser comprovado.
+
+O arquivo público baixado do Supabase foi colocado em
+`backend/docker/certs/prod-ca-2021.crt`. Metadados conferidos com OpenSSL:
+
+- Subject e issuer: `Supabase Root 2021 CA`, organização `Supabase Inc`.
+- CA:TRUE; uso de assinatura de certificados e CRLs; nenhum bloco de chave privada.
+- Validade: 28/04/2021 10:56:53 UTC a 26/04/2031 10:56:53 UTC.
+- Fingerprint SHA-256 do certificado:
+  `80:70:25:AD:50:D4:ED:21:9D:2C:9C:7D:29:9C:00:4F:82:4E:B0:0C:F7:F6:5A:FE:F6:07:D0:7B:72:E6:CA:FA`.
+
+Somente esse caminho foi liberado ao final do `.dockerignore`; os bloqueios de
+outros `.crt`, `.cer`, `.pem`, `.key`, `.pfx`, `.p12`, `.env` e configurações
+sensíveis continuam ativos. Não colocar outros arquivos nesse diretório.
+O estágio final copia a CA para `/app/certs/prod-ca-2021.crt` com modo `0444`
+(root proprietário; leitura para `app`, sem escrita). O diretório criado pelo
+COPY permite travessia. O `RUN test -s ... && test -r ...`, herdando `USER app`,
+faz o build falhar se o arquivo estiver vazio ou ilegível pelo usuário não-root.
+Não é necessário instalar essa CA globalmente no sistema operacional.
+
+No painel Render, editar **o valor** de `ConnectionStrings__DefaultConnection`,
+preservando usuário, senha, database e demais parâmetros operacionais existentes.
+Usar a sintaxe Npgsql, com este modelo sem segredos:
+
+```text
+Host=aws-0-us-east-1.pooler.supabase.com;Port=5432;Database=<DATABASE_ATUAL>;Username=<USUARIO_SESSION_POOLER_ATUAL>;Password=<SENHA_ATUAL>;SSL Mode=VerifyFull;Root Certificate=/app/certs/prod-ca-2021.crt
+```
+
+Conferir os parâmetros no painel Connect > Session pooler do projeto correto.
+Não duplicar chaves de TLS; substituir eventual caminho antigo de Root Certificate.
+Manter `VerifyFull`; não adicionar bypass de validação. Senhas com caracteres
+especiais precisam do quoting/escaping próprio de connection strings Npgsql.
+Não copiar o valor real para documentação, terminal, logs ou build arguments.
+
+O Npgsql aceita `Root Certificate` como caminho de uma CA e `VerifyFull` verifica
+cadeia e hostname ([documentação Npgsql](https://www.npgsql.org/doc/security.html)).
+O Supabase documenta CA baixada do Dashboard e `verify-full` também para
+[Session Pooler](https://supabase.com/docs/guides/database/psql).
+Isso é compatível com a configuração proposta, mas não prova qual cadeia o
+endpoint apresenta hoje. A CA raiz não comprova o hostname do servidor: é preciso
+examinar o SAN do certificado folha. Se o SAN contiver `*.pooler.supabase.com`,
+ele cobre `aws-0-us-east-1.pooler.supabase.com` (um único rótulo).
+
+Validações desta alteração, sem credenciais reais nem acesso ao banco:
+
+- Cópia comparada por SHA-256 de arquivo, idêntica ao original em Downloads.
+- OpenSSL leu os metadados e validou a autoassinatura com
+  `openssl verify -check_ss_sig -CAfile backend/docker/certs/prod-ca-2021.crt backend/docker/certs/prod-ca-2021.crt`.
+  Isso valida a raiz isolada, não a cadeia remota nem sua procedência externa.
+- Programa descartável .NET 10 usando o Npgsql 10.0.0 local confirmou parsing de
+  `SslMode.VerifyFull`, `RootCertificate`, host e porta; não chamou `Open`.
+- Revisão estática do Dockerfile e das regras de exclusão; `git diff --check`.
+- Docker CLI disponível, mas daemon local indisponível (pipe `docker_engine`
+  ausente); build da imagem alterada e smoke Linux **não executados**.
+  Os resultados anteriores deste documento não validam esta nova imagem.
+
+Pendência remota, a executar somente em etapa operacional autorizada, sem senha:
+
+```sh
+openssl s_client -starttls postgres -connect aws-0-us-east-1.pooler.supabase.com:5432 -servername aws-0-us-east-1.pooler.supabase.com -CAfile backend/docker/certs/prod-ca-2021.crt -verify_hostname aws-0-us-east-1.pooler.supabase.com -verify_return_error -showcerts </dev/null
+```
+
+Esse comando acessa o endpoint de produção para handshake TLS, embora não envie
+credenciais nem consultas, por isso não foi executado aqui. Exigir verificação
+sem erros, conferir SAN, intermediárias e validade; se falhar, investigar a cadeia
+antes de publicar. A confirmação autenticada pelo Npgsql também fica pendente.
+
+Para o próximo deploy: incluir os quatro arquivos desta alteração no commit;
+repetir o build Linux e `Test-Container.ps1` acima com Docker disponível; realizar
+a verificação remota autorizada; cadastrar a connection string no Render junto
+da nova imagem (o caminho não existe na imagem antiga). Com auto-deploy desativado,
+salvar a variável sem disparar deploy e então publicar manualmente o commit
+validado. Manter contexto `.`, Dockerfile e pre-deploy vazio. Após publicar,
+conferir `/health` e testar login com conta de teste autorizada para comprovar a
+conexão autenticada. `/health` sozinho não verifica o banco. Nenhum deploy,
+migration ou alteração de código de negócio foi realizado nesta preparação.
 
 CORS precisa da origem HTTPS exata do frontend Vercel, sem caminho, wildcard ou barra final. Origens adicionais exigem índices `__1`, `__2` etc. Não autorizar automaticamente todos os previews de Vercel. Sem origens, Production não autoriza CORS.
 
