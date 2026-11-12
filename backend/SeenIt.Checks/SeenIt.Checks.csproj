@@ -9,14 +9,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <Using Include="Microsoft.Extensions.Logging" />
     <Using Include="System.Net.Http.Json" />
-    <Compile Include="../SeenIt.Api/DTOs/AuthDtos.cs" Link="AuthDtos.cs" />
-    <Compile Include="../SeenIt.Api/DTOs/RegisterRequest.Binding.cs" Link="RegisterRequest.Binding.cs" />
-    <Compile Include="../SeenIt.Api/Services/RegisterValidationFilter.cs" Link="RegisterValidationFilter.cs" />
-    <Compile Include="../SeenIt.Api/External/TvMazeClient.cs" Link="TvMazeClient.cs" />
-    <Compile Include="../SeenIt.Api/External/TvMazeModels.cs" Link="TvMazeModels.cs" />
-    <Compile Include="../SeenIt.Api/DTOs/SeriesDtos.cs" Link="SeriesDtos.cs" />
-    <Compile Include="../SeenIt.Api/Domain/Models/SeriesStatus.cs" Link="SeriesStatus.cs" />
-    <Compile Include="../SeenIt.Api/Services/WatchTimeCalculator.cs" Link="WatchTimeCalculator.cs" />
-    <Compile Include="../SeenIt.Api/DTOs/WatchTimeResponse.cs" Link="WatchTimeResponse.cs" />
+    <ProjectReference Include="../SeenIt.Api/SeenIt.Api.csproj" />
+    <Using Include="Microsoft.AspNetCore.Http" />
   </ItemGroup>
 </Project>

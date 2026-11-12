@@ -101,6 +101,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CurrentUserService>();
 builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<CatalogCache>();
 builder.Services.AddScoped<WatchTimeService>();
 builder.Services.AddScoped<TokenService>();
 builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
@@ -150,6 +151,7 @@ builder.Services.AddHttpClient<
     TvMazeService>(client =>
     {
         client.BaseAddress = new Uri("https://api.tvmaze.com/");
+        client.Timeout = TimeSpan.FromSeconds(15);
 
         client.DefaultRequestHeaders.UserAgent.ParseAdd("SeenIt/1.0");
     });
@@ -162,6 +164,7 @@ if (proxyAddresses.Length > 0) app.UseForwardedHeaders();
 app.UseWhen(context => !context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase),
     branch => branch.UseHttpsRedirection());
 app.UseStaticFiles();
+app.UseMiddleware<IntegrityMiddleware>();
 app.UseRouting();
 app.UseCors("Frontend");
 app.UseAuthentication();
@@ -263,19 +266,23 @@ var series = app.MapGroup("/api/series").WithTags("Catálogo").RequireRateLimiti
 
 series.MapGet("/search", async (string q, TvMazeClient client, CancellationToken cancellationToken) =>
 {
-    if (string.IsNullOrWhiteSpace(q) || q.Trim().Length < 2)
-        return Results.BadRequest(new { message = "Informe ao menos 2 caracteres." });
+    if (!DataIntegrity.Text(q, 200, true) || q.Trim().Length < 2)
+        return Results.BadRequest(new { message = "Informe de 2 a 200 caracteres válidos." });
     return Results.Ok(await client.SearchAsync(q.Trim(), cancellationToken));
 });
 
 series.MapGet("/{id:int}", async (int id, TvMazeClient client, CancellationToken cancellationToken) =>
 {
+    DataIntegrity.Require(id > 0);
     var result = await client.GetByIdAsync(id, cancellationToken);
     return result is null ? Results.NotFound() : Results.Ok(result);
 });
 
 series.MapGet("/{id:int}/episodes", async (int id, TvMazeClient client, CancellationToken cancellationToken) =>
-    Results.Ok(await client.GetEpisodesAsync(id, cancellationToken)));
+{
+    DataIntegrity.Require(id > 0);
+    return Results.Ok(await client.GetEpisodesAsync(id, cancellationToken));
+});
 
 var mySeries = app.MapGroup("/api/my-series")
     .RequireAuthorization()
@@ -288,6 +295,7 @@ mySeries.MapGet("/", async (
     TvMazeClient client,
     CancellationToken cancellationToken) =>
 {
+    DataIntegrity.Require(!status.HasValue || Enum.IsDefined(status.Value));
     var query = database.UserSeries.Where(x => x.UserId == currentUser.UserId);
     if (status.HasValue) query = query.Where(x => x.Status == status.Value);
 
@@ -308,9 +316,13 @@ mySeries.MapPost("/", async (
     IEpisodioAssistidoService episodioAssistidoService,
     CancellationToken cancellationToken) =>
 {
-    if (!Enum.IsDefined(request.Status) || request.ExternalSeriesId <= 0 || string.IsNullOrWhiteSpace(request.Name))
-        return Results.BadRequest(new { message = "Dados da série inválidos." });
+    DataIntegrity.Series(request);
+    var catalogShow = await client.GetByIdAsync(request.ExternalSeriesId, cancellationToken);
+    DataIntegrity.Require(catalogShow is not null, "Série inexistente.");
 
+    var episodes = request.Status == SeriesStatus.Finished
+        ? await client.GetEpisodesAsync(request.ExternalSeriesId, cancellationToken) : null;
+    await using var transaction = await SeriesMutation.BeginAsync(database, currentUser.UserId, request.ExternalSeriesId, cancellationToken);
     var existing = await database.UserSeries.SingleOrDefaultAsync(
         x => x.UserId == currentUser.UserId && x.ExternalSeriesId == request.ExternalSeriesId,
         cancellationToken);
@@ -318,13 +330,14 @@ mySeries.MapPost("/", async (
     if (existing is not null)
     {
         if (request.Status == SeriesStatus.Finished)
-            await episodioAssistidoService.MarcarTodosComoAssistidosAsync(
-                currentUser.UserId, request.ExternalSeriesId, cancellationToken);
+            await episodioAssistidoService.PrepararTodosComoAssistidosAsync(
+                currentUser.UserId, request.ExternalSeriesId, episodes!, cancellationToken);
 
         existing.Status = request.Status;
-        existing.IsAnime ??= await client.IsAnimeAsync(request.ExternalSeriesId, cancellationToken);
+        existing.IsAnime ??= catalogShow!.Genres.Contains("Anime", StringComparer.OrdinalIgnoreCase);
         existing.UpdatedAtUtc = DateTime.UtcNow;
         await database.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         return Results.Ok(ToResponse(existing));
     }
 
@@ -332,44 +345,50 @@ mySeries.MapPost("/", async (
     {
         UserId = currentUser.UserId,
         ExternalSeriesId = request.ExternalSeriesId,
-        Name = request.Name.Trim(),
+        Name = request.Name,
         PosterUrl = request.PosterUrl,
         Summary = request.Summary,
         Status = request.Status,
-        IsAnime = await client.IsAnimeAsync(request.ExternalSeriesId, cancellationToken)
+        IsAnime = catalogShow!.Genres.Contains("Anime", StringComparer.OrdinalIgnoreCase)
     };
     database.UserSeries.Add(item);
     if (request.Status == SeriesStatus.Finished)
-        await episodioAssistidoService.MarcarTodosComoAssistidosAsync(
-            currentUser.UserId, request.ExternalSeriesId, cancellationToken);
+        await episodioAssistidoService.PrepararTodosComoAssistidosAsync(
+            currentUser.UserId, request.ExternalSeriesId, episodes!, cancellationToken);
 
     await database.SaveChangesAsync(cancellationToken);
+    await transaction.CommitAsync(cancellationToken);
     return Results.Created($"/api/my-series/{item.ExternalSeriesId}", ToResponse(item));
 });
 
 mySeries.MapPut("/{externalSeriesId:int}/status", async (
     int externalSeriesId,
     UpdateSeriesStatusRequest request,
+    TvMazeClient client,
     CurrentUserService currentUser,
     AppDbContext database,
     IEpisodioAssistidoService episodioAssistidoService,
     CancellationToken cancellationToken) =>
 {
-    if (!Enum.IsDefined(request.Status))
+    if (externalSeriesId <= 0 || !Enum.IsDefined(request.Status))
         return Results.BadRequest(new { message = "Status de série inválido." });
 
+    var episodes = request.Status == SeriesStatus.Finished
+        ? await client.GetEpisodesAsync(externalSeriesId, cancellationToken) : null;
+    await using var transaction = await SeriesMutation.BeginAsync(database, currentUser.UserId, externalSeriesId, cancellationToken);
     var item = await database.UserSeries.SingleOrDefaultAsync(
         x => x.UserId == currentUser.UserId && x.ExternalSeriesId == externalSeriesId,
         cancellationToken);
     if (item is null) return Results.NotFound();
 
     if (request.Status == SeriesStatus.Finished)
-        await episodioAssistidoService.MarcarTodosComoAssistidosAsync(
-            currentUser.UserId, externalSeriesId, cancellationToken);
+        await episodioAssistidoService.PrepararTodosComoAssistidosAsync(
+            currentUser.UserId, externalSeriesId, episodes!, cancellationToken);
 
     item.Status = request.Status;
     item.UpdatedAtUtc = DateTime.UtcNow;
     await database.SaveChangesAsync(cancellationToken);
+    await transaction.CommitAsync(cancellationToken);
     return Results.Ok(ToResponse(item));
 });
 
@@ -380,6 +399,8 @@ mySeries.MapPut("/{externalSeriesId:int}/favorite", async (
     AppDbContext database,
     CancellationToken cancellationToken) =>
 {
+    DataIntegrity.Require(externalSeriesId > 0);
+    await using var transaction = await SeriesMutation.BeginAsync(database, currentUser.UserId, externalSeriesId, cancellationToken);
     var item = await database.UserSeries.SingleOrDefaultAsync(
         x => x.UserId == currentUser.UserId && x.ExternalSeriesId == externalSeriesId,
         cancellationToken);
@@ -388,6 +409,7 @@ mySeries.MapPut("/{externalSeriesId:int}/favorite", async (
     item.IsFavorite = request.IsFavorite;
     item.UpdatedAtUtc = DateTime.UtcNow;
     await database.SaveChangesAsync(cancellationToken);
+    await transaction.CommitAsync(cancellationToken);
     return Results.Ok(ToResponse(item));
 });
 
@@ -397,6 +419,8 @@ mySeries.MapDelete("/{externalSeriesId:int}", async (
     AppDbContext database,
     CancellationToken cancellationToken) =>
 {
+    DataIntegrity.Require(externalSeriesId > 0);
+    await using var transaction = await SeriesMutation.BeginAsync(database, currentUser.UserId, externalSeriesId, cancellationToken);
     var item = await database.UserSeries.SingleOrDefaultAsync(
         x => x.UserId == currentUser.UserId && x.ExternalSeriesId == externalSeriesId,
         cancellationToken);
@@ -404,6 +428,7 @@ mySeries.MapDelete("/{externalSeriesId:int}", async (
 
     database.UserSeries.Remove(item);
     await database.SaveChangesAsync(cancellationToken);
+    await transaction.CommitAsync(cancellationToken);
     return Results.NoContent();
 });
 

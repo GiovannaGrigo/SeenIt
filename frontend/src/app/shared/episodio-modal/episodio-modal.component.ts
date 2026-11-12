@@ -55,6 +55,7 @@ export class EpisodioModalComponent implements OnInit {
   readonly carregando = signal(true);
   readonly salvando = signal(false);
   readonly mensagemErro = signal<string | null>(null);
+  readonly conflito = signal(false);
   readonly salvoComSucesso = signal(false);
   readonly carregandoVotacao = signal(false);
   readonly erroVotacao = signal<string | null>(null);
@@ -134,7 +135,7 @@ export class EpisodioModalComponent implements OnInit {
   }
 
   salvar(): void {
-    if (this.carregando() || this.salvando() || this.carregandoVotacao() || this.destroyRef.destroyed) return;
+    if (this.conflito() || this.carregando() || this.salvando() || this.carregandoVotacao() || this.destroyRef.destroyed) return;
     this.form.markAllAsTouched();
 
     if (this.form.invalid) {
@@ -189,17 +190,26 @@ export class EpisodioModalComponent implements OnInit {
       )
       .subscribe({
         // consultarVotacao catches its own HTTP errors; only write failures reach here.
-        error: error => this.mensagemErro.set(httpErrorMessage(error)),
+        error: error => {
+          this.conflito.set(error?.status === 409);
+          this.mensagemErro.set(httpErrorMessage(error));
+        },
       });
   }
 
   podeSalvar(): boolean {
-    return this.form.valid && !this.carregando() && !this.salvando() && !this.carregandoVotacao()
+    return this.form.valid && !this.conflito() && !this.carregando() && !this.salvando() && !this.carregandoVotacao()
       && this.selectionKey() !== this.savedSelection;
   }
 
   solicitarFechamento(): void {
     if (!this.salvando()) this.fechar.emit();
+  }
+
+  atualizarAposConflito(): void {
+    if (!this.conflito() || this.carregando() || this.salvando() || this.carregandoVotacao() || this.destroyRef.destroyed) return;
+    this.carregando.set(true);
+    this.carregarDados(); // Reads only. Keep the user's form values for explicit review and resubmission.
   }
 
   repetirVotacao(): void {
@@ -238,6 +248,9 @@ export class EpisodioModalComponent implements OnInit {
       .subscribe({
         next: (resultado) => {
           this.personagens.set(resultado.personagens);
+          if (this.conflito() && this.erroVotacao()) return;
+          this.conflito.set(false);
+          this.mensagemErro.set(null);
         },
         error: error => this.mensagemErro.set(httpErrorMessage(error)),
       });

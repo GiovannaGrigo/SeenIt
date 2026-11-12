@@ -61,7 +61,11 @@ public sealed class ProfileController(
         }
 
         try { return Ok(await watchTime.GetAsync(currentUser.UserId, zone, cancellationToken)); }
-        catch (Exception error) when (error is HttpRequestException || error is OperationCanceledException && !cancellationToken.IsCancellationRequested)
+        catch (CatalogNotFoundException)
+        {
+            return NotFound(new { message = "Uma série do histórico não está mais disponível no catálogo." });
+        }
+        catch (Exception error) when (error is CatalogException or System.Text.Json.JsonException or HttpRequestException || error is OperationCanceledException && !cancellationToken.IsCancellationRequested)
         {
             return StatusCode(StatusCodes.Status503ServiceUnavailable,
                 new { message = "Não foi possível consultar a duração dos episódios. Tente novamente." });

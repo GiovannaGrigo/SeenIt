@@ -130,13 +130,11 @@ internal static class RateLimitingRegressionChecks
         };
         using var client = Client(factory);
         http.ThrowNext = true;
-        var failed = false;
-        try { await client.GetAsync("/api/series/1"); }
-        catch (HttpRequestException) { failed = true; }
-        Check(failed, "Synthetic handler error exercised");
+        Check((await client.GetAsync("/api/series/1")).StatusCode == HttpStatusCode.ServiceUnavailable, "Synthetic catalog error returns controlled 503");
         http.Block = true;
         var cancellations = Enumerable.Range(0, 3).Select(_ => new CancellationTokenSource()).ToArray();
-        var pending = cancellations.Select(cts => client.GetAsync("/api/series/1", cts.Token)).ToArray();
+        // Distinct keys exercise limiter leases independently of catalog single-flight.
+        var pending = cancellations.Select((cts, i) => client.GetAsync($"/api/series/{i+2}", cts.Token)).ToArray();
         await WaitUntilAsync(() => http.Calls == 4);
         Check((await client.GetAsync("/api/series/1")).StatusCode == HttpStatusCode.TooManyRequests, "Catalog category saturated without a queue");
         foreach (var cts in cancellations) cts.Cancel();
@@ -145,7 +143,7 @@ internal static class RateLimitingRegressionChecks
             try { await task; throw new InvalidOperationException("Cancellation expected"); }
             catch (OperationCanceledException) { }
         }
-        var recovered = Enumerable.Range(0, 3).Select(_ => client.GetAsync("/api/series/1")).ToArray();
+        var recovered = Enumerable.Range(5, 3).Select(id => client.GetAsync($"/api/series/{id}")).ToArray();
         try { await WaitUntilAsync(() => http.Calls == 7); }
         finally { http.Release.TrySetResult(); }
         Check((await Task.WhenAll(recovered)).All(r => r.StatusCode == HttpStatusCode.OK), "All three permits recovered after exception and cancellation");
@@ -229,7 +227,8 @@ internal static class RateLimitingRegressionChecks
             Interlocked.Increment(ref calls);
             if (Block) await Release.Task.WaitAsync(cancellationToken);
             if (ThrowNext) { ThrowNext = false; throw new HttpRequestException("Synthetic local failure"); }
-            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"id\":1,\"name\":\"Local\",\"genres\":[]}", System.Text.Encoding.UTF8, "application/json") };
+            var id = int.Parse(request.RequestUri!.Segments.Last());
+            return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(new { id, name="Local", genres=Array.Empty<string>() }), System.Text.Encoding.UTF8, "application/json") };
         }
     }
 }

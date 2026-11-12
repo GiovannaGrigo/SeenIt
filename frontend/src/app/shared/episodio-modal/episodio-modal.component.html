@@ -176,6 +176,10 @@
             {{ mensagemErro() }}
           </p>
         }
+        @if (conflito()) {
+          <p class="feedback-message">Suas escolhas foram mantidas. Atualize o catálogo e a votação, revise e salve novamente.</p>
+          <button type="button" class="secondary" [disabled]="carregando() || salvando() || carregandoVotacao()" (click)="atualizarAposConflito()">Atualizar e revisar</button>
+        }
 
         @if (salvoComSucesso()) {
           <p class="feedback-message success" role="status">

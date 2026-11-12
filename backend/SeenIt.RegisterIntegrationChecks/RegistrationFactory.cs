@@ -23,6 +23,9 @@ internal sealed class RegistrationFactory : WebApplicationFactory<TokenService>
     public int GlobalPerMinute { get; init; } = 10000;
     public Dictionary<string, string> Settings { get; init; } = [];
     public Action<IServiceCollection>? ExtraServices { get; init; }
+    // Fixed loopback-only disposable PostgreSQL. Never read ambient production connections.
+    public bool IsolatedPostgres { get; init; }
+    public const string PostgresConnection = "Host=127.0.0.1;Port=15432;Database=seenit_b03;Username=postgres;Password=synthetic_b03_local_only;Timeout=3;Command Timeout=10";
     public SqliteConnection Connection { get; } = new("Data Source=:memory:");
     public DatabaseProbe Database { get; } = new();
     public ObservedHasher Hasher { get; } = new();
@@ -50,8 +53,13 @@ internal sealed class RegistrationFactory : WebApplicationFactory<TokenService>
             services.RemoveAll<AppDbContext>();
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.RemoveAll<IDbContextOptionsConfiguration<AppDbContext>>();
-            Connection.Open();
-            services.AddDbContext<AppDbContext>(options => options.UseSqlite(Connection).AddInterceptors(Database));
+            if (IsolatedPostgres)
+                services.AddDbContext<AppDbContext>(options => options.UseNpgsql(PostgresConnection, pg => pg.MaxBatchSize(1)).AddInterceptors(Database));
+            else
+            {
+                Connection.Open();
+                services.AddDbContext<AppDbContext>(options => options.UseSqlite(Connection).AddInterceptors(Database));
+            }
             services.RemoveAll<IPasswordHasher<User>>();
             services.AddSingleton<IPasswordHasher<User>>(Hasher);
             services.RemoveAll<IAvatarStorageService>();

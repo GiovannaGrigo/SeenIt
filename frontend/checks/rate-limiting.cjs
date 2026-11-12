@@ -284,6 +284,21 @@ const rx = require('rxjs');
     component.repetirVotacao();
     assert.equal(state.writes, 1);
   }
+  {
+    const { component, state } = modalFixture();
+    const selection = component.form.getRawValue();
+    component.salvar(); state.write.error(failure(409));
+    assert.equal(component.conflito(), true);
+    assert.deepEqual(component.form.getRawValue(), selection, '409 preserves the user form');
+    component.salvar();
+    assert.equal(state.writes, 1, 'Conflict never repeats a write automatically');
+    component.atualizarAposConflito();
+    assert.equal(state.writes, 1, 'Recovery performs reads only');
+    state.vote.next(votes); state.vote.complete();
+    assert.equal(component.conflito(), false);
+    assert.deepEqual(component.form.getRawValue(), selection, 'Refresh preserves the user form');
+    assert.equal(component.podeSalvar(), true, 'Explicit resubmission is available after refresh');
+  }
   for (const status of [429, 400]) {
     const { component, state } = modalFixture();
     component.salvar(); state.write.error(failure(status));

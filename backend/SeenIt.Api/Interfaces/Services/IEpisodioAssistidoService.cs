@@ -16,9 +16,10 @@ public interface IEpisodioAssistidoService
         int temporada,
         CancellationToken cancellationToken);
 
-    Task MarcarTodosComoAssistidosAsync(
+    Task PrepararTodosComoAssistidosAsync(
         Guid userId,
         int externalSeriesId,
+        IReadOnlyCollection<SeenIt.Api.DTOs.EpisodeResponse> episodios,
         CancellationToken cancellationToken);
 
     Task<EpisodioAssistidoResponse> MarcarComoAssistidoAsync(

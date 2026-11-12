@@ -7,19 +7,22 @@ using SeenIt.Api.Interfaces.Services;
 
 namespace SeenIt.Api.Services;
 
-public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClient tvMazeClient) : IEpisodioAssistidoService
+public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClient tvMazeClient, ITvMazeService characters) : IEpisodioAssistidoService
 {
     public async Task<IReadOnlyList<EpisodioAssistidoResponse>> DesmarcarTemporadaAsync(
         Guid userId, int externalSeriesId, int temporada, CancellationToken cancellationToken)
     {
+        var catalog = await tvMazeClient.GetEpisodesAsync(externalSeriesId, cancellationToken);
+        await using var transaction = await SeriesMutation.BeginAsync(dbContext, userId, externalSeriesId, cancellationToken);
         var registros = await dbContext.EpisodiosAssistidos
             .Include(x => x.Sentimentos)
             .Where(x => x.UserId == userId && x.ExternalSeriesId == externalSeriesId && x.Temporada == temporada)
             .ToListAsync(cancellationToken);
 
         dbContext.EpisodiosAssistidos.RemoveRange(registros);
+        await AtualizarStatusSerieAsync(userId, externalSeriesId, cancellationToken, catalog);
         await dbContext.SaveChangesAsync(cancellationToken);
-        await AtualizarStatusSerieAsync(userId, externalSeriesId, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         return await ObterPorSerieAsync(userId, externalSeriesId, cancellationToken);
     }
 
@@ -27,11 +30,13 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
         Guid userId, int externalSeriesId, int temporada, CancellationToken cancellationToken)
     {
         var episodios = await tvMazeClient.GetEpisodesAsync(externalSeriesId, cancellationToken);
+        await using var transaction = await SeriesMutation.BeginAsync(dbContext, userId, externalSeriesId, cancellationToken);
         var idsAssistidos = (await dbContext.EpisodiosAssistidos
             .Where(x => x.UserId == userId && x.ExternalSeriesId == externalSeriesId)
             .Select(x => x.ExternalEpisodeId)
             .ToListAsync(cancellationToken)).ToHashSet();
 
+        DataIntegrity.Require(episodios.Any(x => x.Season == temporada), "Temporada inexistente.");
         foreach (var episodio in episodios.Where(x => x.Season == temporada))
         {
             if (!idsAssistidos.Add(episodio.Id))
@@ -48,14 +53,15 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
             });
         }
 
+        await AtualizarStatusSerieAsync(userId, externalSeriesId, cancellationToken, episodios);
         await dbContext.SaveChangesAsync(cancellationToken);
-        await AtualizarStatusSerieAsync(userId, externalSeriesId, cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         return await ObterPorSerieAsync(userId, externalSeriesId, cancellationToken);
     }
 
-    public async Task MarcarTodosComoAssistidosAsync(Guid userId, int externalSeriesId, CancellationToken cancellationToken)
+    public async Task PrepararTodosComoAssistidosAsync(Guid userId, int externalSeriesId, IReadOnlyCollection<SeenIt.Api.DTOs.EpisodeResponse> episodios, CancellationToken cancellationToken)
     {
-        var episodios = await tvMazeClient.GetEpisodesAsync(externalSeriesId, cancellationToken);
+        if (dbContext.Database.CurrentTransaction is null) throw new InvalidOperationException("Caller must own the aggregate transaction.");
         var idsAssistidos = (await dbContext.EpisodiosAssistidos
             .Where(x => x.UserId == userId && x.ExternalSeriesId == externalSeriesId)
             .Select(x => x.ExternalEpisodeId)
@@ -84,6 +90,21 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
         MarcarEpisodioAssistidoRequest request,
         CancellationToken cancellationToken)
     {
+        DataIntegrity.Episode(externalEpisodeId, request);
+        var catalog = await tvMazeClient.GetEpisodesAsync(request.ExternalSeriesId, cancellationToken);
+        var canonical = catalog.SingleOrDefault(x => x.Id == externalEpisodeId);
+        DataIntegrity.Require(canonical is not null, "Episódio não pertence à série.");
+        DataIntegrity.Require(canonical!.Season == request.Temporada && canonical.Number == request.NumeroEpisodio,
+            "Temporada ou número de episódio incompatível.");
+        string characterName = string.Empty;
+        if (request.ExternalCharacterId > 0)
+        {
+            var cast = await characters.ObterPersonagensDoEpisodioAsync(request.ExternalSeriesId, externalEpisodeId, cancellationToken);
+            var character = cast.SingleOrDefault(x => x.ExternalCharacterId == request.ExternalCharacterId);
+            DataIntegrity.Require(character is not null, "Personagem não pertence à série/episódio.");
+            characterName = character!.Nome;
+        }
+        await using var transaction = await SeriesMutation.BeginAsync(dbContext, userId, request.ExternalSeriesId, cancellationToken);
         var episodioAssistido =
             await dbContext.EpisodiosAssistidos
                 .Include(x => x.Sentimentos)
@@ -121,17 +142,13 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
             request.NumeroEpisodio;
 
         episodioAssistido.NomeEpisodio =
-            request.NomeEpisodio.Trim();
+            canonical.Name;
 
         episodioAssistido.ExternalCharacterId =
-            request.ExternalCharacterId > 0
-                ? request.ExternalCharacterId
-                : 0;
+            request.ExternalCharacterId;
 
         episodioAssistido.PersonagemFavoritoNome =
-            request.ExternalCharacterId > 0
-                ? request.PersonagemFavoritoNome?.Trim() ?? string.Empty
-                : string.Empty;
+            characterName;
 
         var sentimentosSolicitados =
             (request.Sentimentos ?? [])
@@ -173,17 +190,17 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
                 });
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
-
         await AtualizarStatusSerieAsync(
             userId,
             request.ExternalSeriesId,
-            cancellationToken);
+            cancellationToken, catalog);
 
+        await dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
         return MapearResponse(episodioAssistido);
     }
 
-    private async Task AtualizarStatusSerieAsync(Guid userId, int externalSeriesId, CancellationToken cancellationToken)
+    private async Task AtualizarStatusSerieAsync(Guid userId, int externalSeriesId, CancellationToken cancellationToken, IReadOnlyCollection<SeenIt.Api.DTOs.EpisodeResponse> episodiosDaSerie)
     {
         var serie = await dbContext.UserSeries
             .SingleOrDefaultAsync(
@@ -195,11 +212,6 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
         if (serie is null)
             return;
 
-        var episodiosDaSerie =
-            await tvMazeClient.GetEpisodesAsync(
-                externalSeriesId,
-                cancellationToken);
-
         var idsEpisodios = episodiosDaSerie
             .Select(x => x.Id)
             .ToArray();
@@ -207,7 +219,7 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
         if (idsEpisodios.Length == 0)
             return;
 
-        var totalAssistidos =
+        var savedIds =
             await dbContext.EpisodiosAssistidos
                 .Where(x =>
                     x.UserId == userId &&
@@ -215,7 +227,15 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
                     idsEpisodios.Contains(x.ExternalEpisodeId))
                 .Select(x => x.ExternalEpisodeId)
                 .Distinct()
-                .CountAsync(cancellationToken);
+                .ToListAsync(cancellationToken);
+        var watched = savedIds.ToHashSet();
+        foreach (var entry in dbContext.ChangeTracker.Entries<EpisodioAssistido>()
+            .Where(e => e.Entity.UserId == userId && e.Entity.ExternalSeriesId == externalSeriesId))
+        {
+            if (entry.State == EntityState.Deleted) watched.Remove(entry.Entity.ExternalEpisodeId);
+            else if (idsEpisodios.Contains(entry.Entity.ExternalEpisodeId)) watched.Add(entry.Entity.ExternalEpisodeId);
+        }
+        var totalAssistidos = watched.Count;
 
         var novoStatus =
             totalAssistidos == 0
@@ -230,8 +250,6 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
         serie.Status = novoStatus;
         serie.UpdatedAtUtc = DateTime.UtcNow;
 
-        await dbContext.SaveChangesAsync(
-            cancellationToken);
     }
 
     public async Task<IReadOnlyList<EpisodioAssistidoResponse>> ObterPorSerieAsync(
@@ -260,29 +278,16 @@ public sealed class EpisodioAssistidoService(AppDbContext dbContext, TvMazeClien
             int externalEpisodeId,
             CancellationToken cancellationToken)
     {
-        var votos = await dbContext.EpisodiosAssistidos
-            .AsNoTracking()
-            .Where(episodio =>
-                episodio.ExternalEpisodeId == externalEpisodeId &&
-                episodio.ExternalCharacterId > 0 &&
-                episodio.PersonagemFavoritoNome != "")
-            .GroupBy(episodio => new
-            {
-                episodio.ExternalCharacterId,
-                episodio.PersonagemFavoritoNome
-            })
-            .Select(grupo => new
-            {
-                grupo.Key.ExternalCharacterId,
-                PersonagemNome =
-                    grupo.Key.PersonagemFavoritoNome,
-                TotalVotos = grupo.Count()
-            })
-            .OrderByDescending(resultado =>
-                resultado.TotalVotos)
-            .ThenBy(resultado =>
-                resultado.PersonagemNome)
-            .ToListAsync(cancellationToken);
+        var episode = await tvMazeClient.GetEpisodeSeriesIdAsync(externalEpisodeId, cancellationToken);
+        var cast = await characters.ObterPersonagensDoEpisodioAsync(episode, externalEpisodeId, cancellationToken);
+        var names = cast.ToDictionary(x => x.ExternalCharacterId, x => x.Nome);
+        var rows = await dbContext.EpisodiosAssistidos.AsNoTracking()
+            .Where(x => x.ExternalEpisodeId == externalEpisodeId && x.ExternalSeriesId == episode && x.ExternalCharacterId > 0)
+            .GroupBy(x => x.ExternalCharacterId)
+            .Select(g => new { ExternalCharacterId = g.Key, TotalVotos = g.Count() }).ToListAsync(cancellationToken);
+        var votos = rows.Where(x => names.ContainsKey(x.ExternalCharacterId))
+            .Select(x => new { x.ExternalCharacterId, PersonagemNome = names[x.ExternalCharacterId], x.TotalVotos })
+            .OrderByDescending(x => x.TotalVotos).ThenBy(x => x.PersonagemNome).ToList();
 
         var totalGeralVotos =
             votos.Sum(voto => voto.TotalVotos);

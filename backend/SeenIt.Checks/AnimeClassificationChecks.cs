@@ -10,7 +10,8 @@ internal static class AnimeClassificationChecks
         using var handler = new ShowHandler();
         using var http = new HttpClient(handler) { BaseAddress = new Uri("https://api.tvmaze.com/") };
         using var cache = new MemoryCache(new MemoryCacheOptions());
-        var client = new TvMazeClient(http, cache, NullLogger<TvMazeClient>.Instance);
+        using var shared = new CatalogCache();
+        var client = new TvMazeClient(http, cache, NullLogger<TvMazeClient>.Instance, shared);
 
         async Task Expect(int id, bool? expected)
         {
