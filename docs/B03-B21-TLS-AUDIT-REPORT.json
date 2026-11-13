@@ -1,0 +1,520 @@
+{
+  "audit": {
+    "AuditVersion": "B03-B2.1/1.0",
+    "StartedUtc": "2026-11-12T13:37:20.3689665+00:00",
+    "FinishedUtc": "2026-11-12T13:37:37.8220699+00:00",
+    "PostgreSqlVersion": "17.11",
+    "Mode": "remote-explicit",
+    "AuditComplete": true,
+    "SchemaValidatedInitially": true,
+    "SchemaConformantAtEnd": true,
+    "ReadOnlyVerified": true,
+    "CompletedBatches": 6,
+    "OmittedBatches": [],
+    "InterruptedQueries": [],
+    "EvidenceReasonCode": null,
+    "ExecutorDeclaration": "Fixed SELECTs and transaction control only; this statement is not independent evidence of unchanged data.",
+    "DatabaseGuarantees": "See per-batch READ ONLY, identity, privilege and rollback confirmations.",
+    "IndependentTestEvidence": null,
+    "Batches": [
+      {
+        "Query": "Q0",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Connected database catalog allowlist; other database access denied. Built-in routine sandbox not claimed.",
+        "TlsVerified": true,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": null,
+        "Findings": null,
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 2899,
+        "QueryDurationMs": 107,
+        "MetadataDurationMs": 107,
+        "DenominatorDurationMs": null
+      },
+      {
+        "Query": "Q1",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Connected database catalog allowlist; other database access denied. Built-in routine sandbox not claimed.",
+        "TlsVerified": true,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 1002,
+          "UserSeries": 10006,
+          "EpisodiosAssistidos": 200008,
+          "EpisodiosAssistidosSentimentos": 400006
+        },
+        "Findings": [
+          {
+            "Category": "H01_biblioteca_grupos",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H01_episodio_grupos",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H01_sentimento_grupos",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H02_biblioteca_sem_usuario",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H02_episodio_sem_usuario",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H02_sentimento_sem_episodio",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "C",
+            "Severity": "high"
+          }
+        ],
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 3246,
+        "QueryDurationMs": 1074,
+        "MetadataDurationMs": 136,
+        "DenominatorDurationMs": 119
+      },
+      {
+        "Query": "Q2",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Connected database catalog allowlist; other database access denied. Built-in routine sandbox not claimed.",
+        "TlsVerified": true,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 1002,
+          "UserSeries": 10006,
+          "EpisodiosAssistidos": 200008,
+          "EpisodiosAssistidosSentimentos": 400006
+        },
+        "Findings": [
+          {
+            "Category": "H03_biblioteca_id",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H03_episodio_ids_posicao",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H03_personagem_negativo",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H03_status",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H04_episodios_mais_cinco",
+            "Count": 1,
+            "Unit": "episodes",
+            "Classification": "D",
+            "Severity": "review"
+          },
+          {
+            "Category": "H04_sentimento_enum",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "review"
+          },
+          {
+            "Category": "H07_positivo_nome_branco",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H07_zero_com_nome",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_data_assistido",
+            "Count": 2,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_datas_biblioteca",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_episodio_nome_branco",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_poster_triagem",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_serie_nome_branco",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          }
+        ],
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 2362,
+        "QueryDurationMs": 322,
+        "MetadataDurationMs": 79,
+        "DenominatorDurationMs": 100
+      },
+      {
+        "Query": "Q3",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Connected database catalog allowlist; other database access denied. Built-in routine sandbox not claimed.",
+        "TlsVerified": true,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 1002,
+          "UserSeries": 10006,
+          "EpisodiosAssistidos": 200008,
+          "EpisodiosAssistidosSentimentos": 400006
+        },
+        "Findings": [
+          {
+            "Category": "H10_historico_sem_biblioteca_valido",
+            "Count": 2,
+            "Unit": "rows",
+            "Classification": "L",
+            "Severity": "informative"
+          },
+          {
+            "Category": "H14_anime_desconhecido_valido",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "L",
+            "Severity": "informative"
+          }
+        ],
+        "Distribution": [
+          {
+            "Status": 1,
+            "assistidos_locais": 3,
+            "sem_historico": false,
+            "vinculos": 1
+          },
+          {
+            "Status": 1,
+            "assistidos_locais": 20,
+            "sem_historico": false,
+            "vinculos": 3000
+          },
+          {
+            "Status": 2,
+            "assistidos_locais": 0,
+            "sem_historico": true,
+            "vinculos": 1
+          },
+          {
+            "Status": 2,
+            "assistidos_locais": 2,
+            "sem_historico": false,
+            "vinculos": 1
+          },
+          {
+            "Status": 2,
+            "assistidos_locais": 20,
+            "sem_historico": false,
+            "vinculos": 4000
+          },
+          {
+            "Status": 3,
+            "assistidos_locais": 0,
+            "sem_historico": true,
+            "vinculos": 2
+          },
+          {
+            "Status": 3,
+            "assistidos_locais": 20,
+            "sem_historico": false,
+            "vinculos": 3000
+          },
+          {
+            "Status": 99,
+            "assistidos_locais": 1,
+            "sem_historico": false,
+            "vinculos": 1
+          }
+        ],
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 2727,
+        "QueryDurationMs": 319,
+        "MetadataDurationMs": 112,
+        "DenominatorDurationMs": 138
+      },
+      {
+        "Query": "Q4",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Connected database catalog allowlist; other database access denied. Built-in routine sandbox not claimed.",
+        "TlsVerified": true,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 1002,
+          "UserSeries": 10006,
+          "EpisodiosAssistidos": 200008,
+          "EpisodiosAssistidosSentimentos": 400006
+        },
+        "Findings": [
+          {
+            "Category": "H05_episodios_com_varias_posicoes",
+            "Count": 2,
+            "Unit": "groups",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H05_episodios_com_varias_series",
+            "Count": 1,
+            "Unit": "groups",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H05_mesma_posicao_varios_ids",
+            "Count": 1,
+            "Unit": "groups",
+            "Classification": "M",
+            "Severity": "review"
+          }
+        ],
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 3451,
+        "QueryDurationMs": 1011,
+        "MetadataDurationMs": 106,
+        "DenominatorDurationMs": 105
+      },
+      {
+        "Query": "QFinal",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Connected database catalog allowlist; other database access denied. Built-in routine sandbox not claimed.",
+        "TlsVerified": true,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": null,
+        "Findings": null,
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 2762,
+        "QueryDurationMs": 235,
+        "MetadataDurationMs": 235,
+        "DenominatorDurationMs": null
+      }
+    ],
+    "Skipped": [
+      "Q5: disabled by default",
+      "Q6/Q7: synthetic checks only; no external catalog execution path"
+    ],
+    "Limitations": [
+      "No TVmaze access. Test evidence and production authorization are separate.",
+      "Each batch has its own repeatable-read snapshot; batches are not one global snapshot.",
+      "Categories overlap; counts of groups, rows and valid controls must not be summed.",
+      "Manual status choices and history without a library entry are valid.",
+      "Text/URL SQL checks are screening only, not exact .NET Unicode/URI validation.",
+      "No proof of historical intent, ownership mistakes between valid users or past atomicity."
+    ]
+  },
+  "checks": [
+    "TLS VerifyFull minimal privileges complete audit and final schema check",
+    "each batch confirms identity TLS READ ONLY privileges and rollback",
+    "report explicitly distinguishes completed omitted and interrupted batches",
+    "expected synthetic counts including valid controls",
+    "TLS repeated execution same counts and distributions",
+    "wrong hostname rejected without data SELECT",
+    "untrusted CA rejected without fallback",
+    "invalid CA certificate rejected",
+    "expired server certificate rejected",
+    "incorrect credentials rejected without data SELECT",
+    "owner API-style identities mismatched identity and unsafe endpoints rejected before connection",
+    "remote builder cannot downgrade TLS or enable parallel connection pool",
+    "unknown TLS and trust override properties rejected",
+    "CLI refuses remote mode without explicit enable flag",
+    "configuration validation does not connect or need secret",
+    "CLI execution requires separately provided secret",
+    "server session_user and current_user mismatch blocks audit",
+    "excess personal column privilege blocks before data",
+    "excess table-level SELECT blocks despite column allowlist",
+    "PUBLIC personal column grant detected effectively",
+    "UPDATE effective privilege blocks remote audit",
+    "MAINTAIN effective privilege blocks remote audit",
+    "PUBLIC TEMP privilege blocks without automatic ACL repair",
+    "access to other database blocks privilege proof",
+    "missing required SELECT yields incomplete not zero",
+    "excess access to other table blocks",
+    "sequence access blocks",
+    "CREATE on unrelated schema blocks",
+    "PUBLIC EXECUTE on custom SECURITY DEFINER function blocks without calling it",
+    "custom elevated function inside pg_catalog is not trusted as built-in",
+    "administrative attribute BYPASSRLS blocks",
+    "administrative role membership blocks even with NOINHERIT",
+    "role membership ADMIN OPTION blocks administrative delegation",
+    "unavailable privilege catalog is inconclusive and blocks",
+    "safe inherited privileges accepted only when within effective allowlist",
+    "excess inherited column privilege detected",
+    "disabled internal FK triggers detected in isolated schema",
+    "index collation drift detected separately from column collation",
+    "index per-key options drift detected",
+    "principal schema validates twelve internal FK triggers and unchanged index contract",
+    "TLS server rejects writes with SQLSTATE 25006",
+    "TLS statement timeout enforced without extending limits",
+    "active TLS SELECT cancellation enforced",
+    "cancelled TLS audit records interrupted and omitted batches with null counts",
+    "interrupted batch has confirmed rollback and unknown final schema not stale success",
+    "full fixture and structure fingerprints unchanged after executor runs and restored test interventions",
+    "remote report excludes secrets and synthetic personal canaries"
+  ],
+  "independentEvidence": {
+    "fullFixtureFingerprintsEqual": true,
+    "scope": "local synthetic TLS database"
+  },
+  "sessionPoolerValidated": false,
+  "limitations": [
+    "Supabase not contacted",
+    "Session pooler not simulated",
+    "Privilege proof scoped to connected PostgreSQL 17 catalog; metadata failure blocks execution"
+  ]
+}

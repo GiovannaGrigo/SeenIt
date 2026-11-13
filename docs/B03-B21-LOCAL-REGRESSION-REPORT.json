@@ -1,0 +1,1003 @@
+{
+  "audit": {
+    "AuditVersion": "B03-B2.1/1.0",
+    "StartedUtc": "2026-11-12T13:35:55.9621151+00:00",
+    "FinishedUtc": "2026-11-12T13:35:56.3511381+00:00",
+    "PostgreSqlVersion": "17.11",
+    "Mode": "local-synthetic",
+    "AuditComplete": true,
+    "SchemaValidatedInitially": true,
+    "SchemaConformantAtEnd": true,
+    "ReadOnlyVerified": true,
+    "CompletedBatches": 6,
+    "OmittedBatches": [],
+    "InterruptedQueries": [],
+    "EvidenceReasonCode": null,
+    "ExecutorDeclaration": "Fixed SELECTs and transaction control only; this statement is not independent evidence of unchanged data.",
+    "DatabaseGuarantees": "See per-batch READ ONLY, identity, privilege and rollback confirmations.",
+    "IndependentTestEvidence": null,
+    "Batches": [
+      {
+        "Query": "Q0",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": null,
+        "Findings": null,
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 58,
+        "QueryDurationMs": 15,
+        "MetadataDurationMs": 15,
+        "DenominatorDurationMs": null
+      },
+      {
+        "Query": "Q1",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 2,
+          "UserSeries": 6,
+          "EpisodiosAssistidos": 8,
+          "EpisodiosAssistidosSentimentos": 6
+        },
+        "Findings": [
+          {
+            "Category": "H01_biblioteca_grupos",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H01_episodio_grupos",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H01_sentimento_grupos",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H02_biblioteca_sem_usuario",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H02_episodio_sem_usuario",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H02_sentimento_sem_episodio",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "C",
+            "Severity": "high"
+          }
+        ],
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 71,
+        "QueryDurationMs": 11,
+        "MetadataDurationMs": 15,
+        "DenominatorDurationMs": 3
+      },
+      {
+        "Query": "Q2",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 2,
+          "UserSeries": 6,
+          "EpisodiosAssistidos": 8,
+          "EpisodiosAssistidosSentimentos": 6
+        },
+        "Findings": [
+          {
+            "Category": "H03_biblioteca_id",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H03_episodio_ids_posicao",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H03_personagem_negativo",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H03_status",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H04_episodios_mais_cinco",
+            "Count": 1,
+            "Unit": "episodes",
+            "Classification": "D",
+            "Severity": "review"
+          },
+          {
+            "Category": "H04_sentimento_enum",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "review"
+          },
+          {
+            "Category": "H07_positivo_nome_branco",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H07_zero_com_nome",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_data_assistido",
+            "Count": 2,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_datas_biblioteca",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_episodio_nome_branco",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_poster_triagem",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_serie_nome_branco",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          }
+        ],
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 68,
+        "QueryDurationMs": 4,
+        "MetadataDurationMs": 18,
+        "DenominatorDurationMs": 3
+      },
+      {
+        "Query": "Q3",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 2,
+          "UserSeries": 6,
+          "EpisodiosAssistidos": 8,
+          "EpisodiosAssistidosSentimentos": 6
+        },
+        "Findings": [
+          {
+            "Category": "H10_historico_sem_biblioteca_valido",
+            "Count": 2,
+            "Unit": "rows",
+            "Classification": "L",
+            "Severity": "informative"
+          },
+          {
+            "Category": "H14_anime_desconhecido_valido",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "L",
+            "Severity": "informative"
+          }
+        ],
+        "Distribution": [
+          {
+            "Status": 1,
+            "assistidos_locais": 3,
+            "sem_historico": false,
+            "vinculos": 1
+          },
+          {
+            "Status": 2,
+            "assistidos_locais": 0,
+            "sem_historico": true,
+            "vinculos": 1
+          },
+          {
+            "Status": 2,
+            "assistidos_locais": 2,
+            "sem_historico": false,
+            "vinculos": 1
+          },
+          {
+            "Status": 3,
+            "assistidos_locais": 0,
+            "sem_historico": true,
+            "vinculos": 2
+          },
+          {
+            "Status": 99,
+            "assistidos_locais": 1,
+            "sem_historico": false,
+            "vinculos": 1
+          }
+        ],
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 64,
+        "QueryDurationMs": 3,
+        "MetadataDurationMs": 16,
+        "DenominatorDurationMs": 3
+      },
+      {
+        "Query": "Q4",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 2,
+          "UserSeries": 6,
+          "EpisodiosAssistidos": 8,
+          "EpisodiosAssistidosSentimentos": 6
+        },
+        "Findings": [
+          {
+            "Category": "H05_episodios_com_varias_posicoes",
+            "Count": 2,
+            "Unit": "groups",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H05_episodios_com_varias_series",
+            "Count": 1,
+            "Unit": "groups",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H05_mesma_posicao_varios_ids",
+            "Count": 1,
+            "Unit": "groups",
+            "Classification": "M",
+            "Severity": "review"
+          }
+        ],
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 69,
+        "QueryDurationMs": 3,
+        "MetadataDurationMs": 15,
+        "DenominatorDurationMs": 3
+      },
+      {
+        "Query": "QFinal",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": null,
+        "Findings": null,
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 56,
+        "QueryDurationMs": 15,
+        "MetadataDurationMs": 15,
+        "DenominatorDurationMs": null
+      }
+    ],
+    "Skipped": [
+      "Q5: disabled by default",
+      "Q6/Q7: synthetic checks only; no external catalog execution path"
+    ],
+    "Limitations": [
+      "No TVmaze access. Test evidence and production authorization are separate.",
+      "Each batch has its own repeatable-read snapshot; batches are not one global snapshot.",
+      "Categories overlap; counts of groups, rows and valid controls must not be summed.",
+      "Manual status choices and history without a library entry are valid.",
+      "Text/URL SQL checks are screening only, not exact .NET Unicode/URI validation.",
+      "No proof of historical intent, ownership mistakes between valid users or past atomicity."
+    ]
+  },
+  "validControls": {
+    "AuditVersion": "B03-B2.1/1.0",
+    "StartedUtc": "2026-11-12T13:35:55.5184739+00:00",
+    "FinishedUtc": "2026-11-12T13:35:55.9581392+00:00",
+    "PostgreSqlVersion": "17.11",
+    "Mode": "local-synthetic",
+    "AuditComplete": true,
+    "SchemaValidatedInitially": true,
+    "SchemaConformantAtEnd": true,
+    "ReadOnlyVerified": true,
+    "CompletedBatches": 6,
+    "OmittedBatches": [],
+    "InterruptedQueries": [],
+    "EvidenceReasonCode": null,
+    "ExecutorDeclaration": "Fixed SELECTs and transaction control only; this statement is not independent evidence of unchanged data.",
+    "DatabaseGuarantees": "See per-batch READ ONLY, identity, privilege and rollback confirmations.",
+    "IndependentTestEvidence": null,
+    "Batches": [
+      {
+        "Query": "Q0",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": null,
+        "Findings": null,
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 103,
+        "QueryDurationMs": 18,
+        "MetadataDurationMs": 18,
+        "DenominatorDurationMs": null
+      },
+      {
+        "Query": "Q1",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 2,
+          "UserSeries": 5,
+          "EpisodiosAssistidos": 4,
+          "EpisodiosAssistidosSentimentos": 5
+        },
+        "Findings": [
+          {
+            "Category": "H01_biblioteca_grupos",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H01_episodio_grupos",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H01_sentimento_grupos",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H02_biblioteca_sem_usuario",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H02_episodio_sem_usuario",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "C",
+            "Severity": "high"
+          },
+          {
+            "Category": "H02_sentimento_sem_episodio",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "C",
+            "Severity": "high"
+          }
+        ],
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 81,
+        "QueryDurationMs": 6,
+        "MetadataDurationMs": 22,
+        "DenominatorDurationMs": 9
+      },
+      {
+        "Query": "Q2",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 2,
+          "UserSeries": 5,
+          "EpisodiosAssistidos": 4,
+          "EpisodiosAssistidosSentimentos": 5
+        },
+        "Findings": [
+          {
+            "Category": "H03_biblioteca_id",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H03_episodio_ids_posicao",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H03_personagem_negativo",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H03_status",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "high"
+          },
+          {
+            "Category": "H04_episodios_mais_cinco",
+            "Count": 0,
+            "Unit": "episodes",
+            "Classification": "D",
+            "Severity": "review"
+          },
+          {
+            "Category": "H04_sentimento_enum",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "D",
+            "Severity": "review"
+          },
+          {
+            "Category": "H07_positivo_nome_branco",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H07_zero_com_nome",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_data_assistido",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_datas_biblioteca",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_episodio_nome_branco",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_poster_triagem",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H12_serie_nome_branco",
+            "Count": 0,
+            "Unit": "rows",
+            "Classification": "M",
+            "Severity": "review"
+          }
+        ],
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 65,
+        "QueryDurationMs": 4,
+        "MetadataDurationMs": 15,
+        "DenominatorDurationMs": 2
+      },
+      {
+        "Query": "Q3",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 2,
+          "UserSeries": 5,
+          "EpisodiosAssistidos": 4,
+          "EpisodiosAssistidosSentimentos": 5
+        },
+        "Findings": [
+          {
+            "Category": "H10_historico_sem_biblioteca_valido",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "L",
+            "Severity": "informative"
+          },
+          {
+            "Category": "H14_anime_desconhecido_valido",
+            "Count": 1,
+            "Unit": "rows",
+            "Classification": "L",
+            "Severity": "informative"
+          }
+        ],
+        "Distribution": [
+          {
+            "Status": 1,
+            "assistidos_locais": 1,
+            "sem_historico": false,
+            "vinculos": 1
+          },
+          {
+            "Status": 2,
+            "assistidos_locais": 0,
+            "sem_historico": true,
+            "vinculos": 1
+          },
+          {
+            "Status": 2,
+            "assistidos_locais": 2,
+            "sem_historico": false,
+            "vinculos": 1
+          },
+          {
+            "Status": 3,
+            "assistidos_locais": 0,
+            "sem_historico": true,
+            "vinculos": 2
+          }
+        ],
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 63,
+        "QueryDurationMs": 3,
+        "MetadataDurationMs": 15,
+        "DenominatorDurationMs": 2
+      },
+      {
+        "Query": "Q4",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": {
+          "Users": 2,
+          "UserSeries": 5,
+          "EpisodiosAssistidos": 4,
+          "EpisodiosAssistidosSentimentos": 5
+        },
+        "Findings": [
+          {
+            "Category": "H05_episodios_com_varias_posicoes",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H05_episodios_com_varias_series",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "M",
+            "Severity": "review"
+          },
+          {
+            "Category": "H05_mesma_posicao_varios_ids",
+            "Count": 0,
+            "Unit": "groups",
+            "Classification": "M",
+            "Severity": "review"
+          }
+        ],
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 61,
+        "QueryDurationMs": 3,
+        "MetadataDurationMs": 16,
+        "DenominatorDurationMs": 3
+      },
+      {
+        "Query": "QFinal",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": true,
+        "Status": "completed",
+        "Failure": null,
+        "EvaluatedRows": null,
+        "Findings": null,
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 0,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "constraint": 7,
+          "index": 7,
+          "fk_trigger": 12,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [],
+        "DurationMs": 63,
+        "QueryDurationMs": 16,
+        "MetadataDurationMs": 16,
+        "DenominatorDurationMs": null
+      }
+    ],
+    "Skipped": [
+      "Q5: disabled by default",
+      "Q6/Q7: synthetic checks only; no external catalog execution path"
+    ],
+    "Limitations": [
+      "No TVmaze access. Test evidence and production authorization are separate.",
+      "Each batch has its own repeatable-read snapshot; batches are not one global snapshot.",
+      "Categories overlap; counts of groups, rows and valid controls must not be summed.",
+      "Manual status choices and history without a library entry are valid.",
+      "Text/URL SQL checks are screening only, not exact .NET Unicode/URI validation.",
+      "No proof of historical intent, ownership mistakes between valid users or past atomicity."
+    ]
+  },
+  "driftStop": {
+    "AuditVersion": "B03-B2.1/1.0",
+    "StartedUtc": "2026-11-12T13:35:57.2144553+00:00",
+    "FinishedUtc": "2026-11-12T13:35:57.2729677+00:00",
+    "PostgreSqlVersion": "17.11",
+    "Mode": "local-synthetic",
+    "AuditComplete": false,
+    "SchemaValidatedInitially": false,
+    "SchemaConformantAtEnd": false,
+    "ReadOnlyVerified": true,
+    "CompletedBatches": 0,
+    "OmittedBatches": [
+      "Q1",
+      "Q2",
+      "Q3",
+      "Q4",
+      "QFinal"
+    ],
+    "InterruptedQueries": [
+      "Q0"
+    ],
+    "EvidenceReasonCode": null,
+    "ExecutorDeclaration": "Fixed SELECTs and transaction control only; this statement is not independent evidence of unchanged data.",
+    "DatabaseGuarantees": "See per-batch READ ONLY, identity, privilege and rollback confirmations.",
+    "IndependentTestEvidence": null,
+    "Batches": [
+      {
+        "Query": "Q0",
+        "ReadOnlyConfirmed": true,
+        "IdentityVerified": true,
+        "PrivilegesVerified": true,
+        "PrivilegeCoverage": "Local B03-B2 role checks; not the remote allowlist.",
+        "TlsVerified": false,
+        "RollbackConfirmed": true,
+        "CleanupFailure": null,
+        "SchemaConformant": false,
+        "Status": "incomplete",
+        "Failure": "schema_drift_stop",
+        "EvaluatedRows": null,
+        "Findings": null,
+        "Distribution": null,
+        "OpaqueEvidence": null,
+        "SchemaDifferences": 26,
+        "SchemaObjectsChecked": {
+          "table": 4,
+          "column": 29,
+          "default": 1
+        },
+        "SchemaDifferenceKinds": [
+          "constraint",
+          "fk_trigger",
+          "index"
+        ],
+        "DurationMs": 58,
+        "QueryDurationMs": 12,
+        "MetadataDurationMs": 12,
+        "DenominatorDurationMs": null
+      }
+    ],
+    "Skipped": [
+      "Q5: disabled by default",
+      "Q6/Q7: synthetic checks only; no external catalog execution path",
+      "Q1: previous batch incomplete",
+      "Q2: previous batch incomplete",
+      "Q3: previous batch incomplete",
+      "Q4: previous batch incomplete",
+      "QFinal: previous batch incomplete"
+    ],
+    "Limitations": [
+      "No TVmaze access. Test evidence and production authorization are separate.",
+      "Each batch has its own repeatable-read snapshot; batches are not one global snapshot.",
+      "Categories overlap; counts of groups, rows and valid controls must not be summed.",
+      "Manual status choices and history without a library entry are valid.",
+      "Text/URL SQL checks are screening only, not exact .NET Unicode/URI validation.",
+      "No proof of historical intent, ownership mistakes between valid users or past atomicity."
+    ]
+  },
+  "checks": [
+    "valid schema matches all frozen signatures",
+    "every batch confirms READ ONLY before metadata and data SELECTs",
+    "valid fixtures produce zero structural domain and identity findings",
+    "history without library and unknown anime are valid controls",
+    "manual statuses preserved in distribution without corruption labels",
+    "Q0-Q4 execute on PostgreSQL 17 principal schema",
+    "exact expected counts for every Q1-Q4 category",
+    "evaluated row denominators are 2 users 6 library 8 watched 6 feelings",
+    "repeated execution returns identical schema counts and distributions",
+    "Q5 disabled by default",
+    "optional Q5 returns opaque identifiers only",
+    "Q5 SQL caps evidence at twenty opaque UUIDs",
+    "Q0 detects missing PK FK and unique indexes and stops normal executor",
+    "isolated drift fixture detects exact duplicate groups and orphan rows",
+    "Q0 detects column type or length drift",
+    "Q0 detects column nullability drift",
+    "Q0 detects unexpected partial index",
+    "Q0 detects missing table",
+    "actual executor lock timeout returns incomplete null counts and skipped later batches",
+    "Q6/Q7 synthetic SQL uses READ ONLY",
+    "Q6 synthetic removed episode and renumbered position counts",
+    "Q7 principal cast guest cast old name and removed character counts",
+    "Q7 manual InList and Watching remain distributions not corruption",
+    "incomplete synthetic episode response excluded from comparisons",
+    "incomplete synthetic cast never means invalid character",
+    "Finished with empty or expanded catalog is review context only",
+    "full row and schema fingerprints unchanged by all audit runs",
+    "external hosts URLs DNS aliases multi-host strings and sockets rejected before connection",
+    "no free SQL path: DDL DML side-effect SELECTs and Q6 rejected by query allowlist",
+    "reader has no write privileges ownership role memberships CREATE or TEMP",
+    "server rejects DML in READ ONLY with SQLSTATE 25006",
+    "SELECT-only role rejects DML even in READ WRITE with SQLSTATE 42501",
+    "server rejects DDL",
+    "reader cannot SELECT user emails",
+    "statement timeout is incomplete failure never zero",
+    "command cancellation interrupts active SELECT",
+    "executor cancellation yields incomplete report with null counts and skipped queries",
+    "connection failure sanitized and incomplete rather than zero",
+    "executor refuses accidentally elevated reader",
+    "repeatable-read snapshot unchanged after concurrent committed write",
+    "new transaction sees concurrent commit",
+    "test-owned mutations restored and principal schema never weakened",
+    "report contains no synthetic PII or secret canaries"
+  ],
+  "externalNetworkCalls": 0,
+  "executorDataChanges": 0,
+  "decision": "APROVADO PARA REVIS\u00C3O"
+}
