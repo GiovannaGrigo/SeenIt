@@ -31,3 +31,12 @@
 *.p12
 *.pem
 *.key
+
+# Experimental worktrees and local audit artifacts
+/.worktrees/
+/artifacts/
+**/TestResults/
+**/coverage/
+*.log
+*.secret
+**/remote.local.json
