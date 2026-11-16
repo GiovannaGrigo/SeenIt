@@ -27,5 +27,13 @@
     "@angular/cli": "21.2.30",
     "@angular/compiler-cli": "21.2.26",
     "typescript": "5.9.3"
+  },
+  "overrides": {
+    "@angular/cli@21.2.30": {
+      "pacote@21.5.1": {
+        "glob": "14.0.6",
+        "minimatch": "11.0.8"
+      }
+    }
   }
 }
