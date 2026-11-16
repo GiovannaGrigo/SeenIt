@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from "@angular/core";
+import { Injectable, signal, untracked } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { tap } from "rxjs";
 import { AuthResponse, User } from "../models/auth.models";
@@ -20,11 +20,22 @@ export class AuthService {
 
   readonly user = this.userSignal.asReadonly();
 
-  readonly isAuthenticated = computed(() => {
-    return !!this.tokenSignal() && !!this.userSignal();
-  });
+  readonly isAuthenticated = (): boolean => {
+    const token = this.tokenSignal();
+    const user = this.userSignal();
+    if (token && user && this.hasValidLifetime(token)) {
+      return true;
+    }
 
-  constructor(private readonly http: HttpClient) {}
+    if (token !== null || user !== null) {
+      untracked(() => this.logout());
+    }
+    return false;
+  };
+
+  constructor(private readonly http: HttpClient) {
+    if (!this.isAuthenticated()) this.logout();
+  }
 
   get token(): string | null {
     return this.tokenSignal();
@@ -92,9 +103,41 @@ export class AuthService {
     const raw = localStorage.getItem(this.userKey);
 
     try {
-      return raw ? (JSON.parse(raw) as User) : null;
+      const user: unknown = raw ? JSON.parse(raw) : null;
+      if (!user || typeof user !== "object") return null;
+      const candidate = user as Record<string, unknown>;
+      return typeof candidate['id'] === "string" && !!candidate['id'] &&
+        typeof candidate['name'] === "string" &&
+        typeof candidate['email'] === "string" &&
+        (candidate['avatarUrl'] === null || typeof candidate['avatarUrl'] === "string")
+        ? user as User : null;
     } catch {
       return null;
+    }
+  }
+
+  private hasValidLifetime(token: string): boolean {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return false;
+      const bytes = parts.map(part => {
+        if (!/^[A-Za-z0-9_-]+$/.test(part) || part.length % 4 === 1) {
+          throw new Error('Invalid Base64URL');
+        }
+        const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
+        return Uint8Array.from(atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, '=')), c => c.charCodeAt(0));
+      });
+      const decoder = new TextDecoder('utf-8', { fatal: true });
+      const header = JSON.parse(decoder.decode(bytes[0]));
+      const payload = JSON.parse(decoder.decode(bytes[1]));
+
+      return !!header && typeof header === 'object' && !Array.isArray(header) &&
+        typeof header.alg === 'string' && !!header.alg && header.alg !== 'none' &&
+        !!payload && typeof payload === 'object' && !Array.isArray(payload) &&
+        typeof payload.exp === 'number' && Number.isFinite(payload.exp) &&
+        payload.exp > Date.now() / 1000;
+    } catch {
+      return false;
     }
   }
 }
