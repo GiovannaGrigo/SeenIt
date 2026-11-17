@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 # Build from the repository root: docker build -f backend/SeenIt.Api/Dockerfile .
 # Render uses linux/amd64. No build arguments or secrets are needed.
-FROM mcr.microsoft.com/dotnet/sdk:10.0-noble AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble@sha256:ddbaedfc8b774389d91a511af08b77296f2c7a8d15d86f6214d2a87166933625 AS build
 WORKDIR /src
 
 COPY backend/SeenIt.Api/SeenIt.Api.csproj backend/SeenIt.Api/
@@ -33,7 +33,7 @@ RUN dotnet package list --project backend/SeenIt.Api/SeenIt.Api.csproj --no-rest
 
 # Ubuntu/glibc includes ICU, tzdata, CA certificates and the C/C++ runtime.
 # NoDependencies Skia assets do not need fontconfig for bitmap decode/encode.
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS runtime-base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble@sha256:05acd0ca475e2130832bab441d28a7dd31041129bad28eac7928151fd73cd2c5 AS runtime-base
 ENV ASPNETCORE_ENVIRONMENT=Production \
     DOTNET_ENVIRONMENT=Production \
     PORT=10000 \
