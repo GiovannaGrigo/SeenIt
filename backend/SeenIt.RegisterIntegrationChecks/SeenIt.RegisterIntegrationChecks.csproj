@@ -10,6 +10,7 @@
     <ProjectReference Include="../SeenIt.Api/SeenIt.Api.csproj" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.7" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.12" PrivateAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <!-- Explicit root: this repository has no solution file for factory discovery. -->
