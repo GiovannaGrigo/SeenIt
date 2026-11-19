@@ -161,8 +161,12 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment()) app.MapOpenApi();
 if (proxyAddresses.Length > 0) app.UseForwardedHeaders();
 // O health check básico também atende o tráfego HTTP interno do provedor.
-app.UseWhen(context => !context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase),
-    branch => branch.UseHttpsRedirection());
+var httpsRedirectionHandledByEdge = builder.Configuration.GetValue<bool>("ReverseProxy:HttpsRedirectionHandledByEdge", false);
+if (!httpsRedirectionHandledByEdge)
+{
+    app.UseWhen(context => !context.Request.Path.Equals("/health", StringComparison.OrdinalIgnoreCase),
+        branch => branch.UseHttpsRedirection());
+}
 app.UseStaticFiles();
 app.UseMiddleware<IntegrityMiddleware>();
 app.UseRouting();
