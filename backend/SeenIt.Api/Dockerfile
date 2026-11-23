@@ -33,7 +33,7 @@ RUN dotnet package list --project backend/SeenIt.Api/SeenIt.Api.csproj --no-rest
 
 # Ubuntu/glibc includes ICU, tzdata, CA certificates and the C/C++ runtime.
 # NoDependencies Skia assets do not need fontconfig for bitmap decode/encode.
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble@sha256:05acd0ca475e2130832bab441d28a7dd31041129bad28eac7928151fd73cd2c5 AS runtime-base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble@sha256:3a31a3c8c41f487ecab474cf6dcf152489fedca9fd145b0b49a4b9e616cd6dde AS runtime-base
 ENV ASPNETCORE_ENVIRONMENT=Production \
     DOTNET_ENVIRONMENT=Production \
     PORT=10000 \
