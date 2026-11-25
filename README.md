@@ -1,99 +1,296 @@
-# SeenIt
+# 🎬 SeenIt
 
-O SeenIt é um projeto pessoal para organizar as séries que estou assistindo ou pretendo assistir.
+O **SeenIt** é uma aplicação web para acompanhar séries e animes de forma simples e personalizada.
 
-A aplicação permite pesquisar séries utilizando os dados da TVmaze, visualizar temporadas e episódios e adicionar séries a uma lista pessoal.
+Com ele, é possível pesquisar títulos, organizar o que você pretende assistir, acompanhar o que está assistindo, marcar séries como finalizadas, salvar favoritos e consultar temporadas e episódios em um único lugar.
 
-## Tecnologias utilizadas
+O projeto nasceu como uma aplicação pessoal e vem evoluindo continuamente, tanto em funcionalidades quanto em arquitetura, segurança e experiência do usuário.
+
+---
+
+## 📸 Preview
+
+![Tela Minha Lista do SeenIt](docs/images/minha-lista.png)
+
+> Tela **Minha Lista**, onde o usuário pode acompanhar séries e animes, alterar status, gerenciar favoritos e acessar os detalhes de cada título.
+
+---
+
+## ✨ Funcionalidades
+
+### 🔐 Conta e autenticação
+
+- Criar uma conta.
+- Fazer login na aplicação.
+- Autenticação utilizando JWT.
+- Rotas protegidas para funcionalidades que dependem do usuário autenticado.
+- Lista pessoal isolada por usuário.
+
+### 🔎 Explorar
+
+- Pesquisar séries e animes utilizando o catálogo da [TVmaze](https://www.tvmaze.com/).
+- Visualizar informações detalhadas sobre cada título.
+- Consultar temporadas e episódios.
+- Adicionar títulos diretamente à lista pessoal.
+
+### 📺 Minha Lista
+
+Cada usuário possui sua própria coleção de títulos.
+
+É possível classificar uma série como:
+
+- **Para assistir**
+- **Assistindo**
+- **Finalizada**
+
+Também é possível:
+
+- Alterar o status de uma série.
+- Remover títulos da coleção.
+- Adicionar ou remover títulos dos favoritos.
+- Acessar os detalhes diretamente pela lista.
+
+### ❤️ Favoritos
+
+Os favoritos são independentes do status da série.
+
+A tela **Minha Lista** possui uma seção exclusiva de **Séries Favoritas**, permitindo visualizar rapidamente os títulos marcados pelo usuário.
+
+O favorito também pode ser removido diretamente pelo coração exibido no card.
+
+### 🍥 Animes
+
+O SeenIt identifica automaticamente títulos classificados com o gênero `Anime` pela TVmaze.
+
+Eles são organizados separadamente em:
+
+- **Animes**
+- **Animes Favoritos**
+
+Os filtros de status continuam considerando toda a coleção, incluindo séries e animes, sem duplicar títulos entre as seções.
+
+A classificação é armazenada na lista do usuário. Títulos adicionados anteriormente também podem ser classificados automaticamente ao carregar a coleção.
+
+Caso a TVmaze esteja temporariamente indisponível, a lista continua acessível e a classificação pendente pode ser realizada posteriormente.
+
+### 🎞️ Episódios
+
+Dentro dos detalhes de uma série, o usuário pode:
+
+- Visualizar episódios separados por temporada.
+- Acompanhar os episódios disponíveis para cada título.
+- Registrar episódios assistidos.
+- Informar sentimentos relacionados ao episódio.
+- Selecionar um personagem favorito do episódio.
+
+O status da série também pode evoluir automaticamente conforme o acompanhamento dos episódios.
+
+---
+
+## 🛠️ Tecnologias
 
 ### Frontend
 
-- Angular 21
-- TypeScript
-- Standalone Components
-- Signals
+- **Angular 21**
+- **TypeScript**
+- **Standalone Components**
+- **Angular Signals**
+- **PrimeNG**
 
 ### Backend
 
-- C# e .NET 10
-- Entity Framework Core
-- PostgreSQL
-- Autenticação com JWT
+- **C#**
+- **.NET 10**
+- **ASP.NET Core Web API**
+- **Entity Framework Core**
+- **PostgreSQL**
+- **JWT Authentication**
 
-## O que é possível fazer
+### Integrações
 
-- Criar uma conta e entrar na aplicação.
-- Pesquisar séries pelo catálogo da TVmaze.
-- Visualizar informações da série.
-- Consultar episódios separados por temporada.
-- Adicionar séries à lista pessoal.
-- Definir o status como:
-  - Para assistir
-  - Assistindo
-  - Finalizada
-- Alterar o status de uma série.
-- Remover uma série da lista.
-- Adicionar e remover séries dos favoritos, independentemente do status.
-- Consultar as séries favoritas na seção “Séries Favoritas”, abaixo da lista principal e independente dos filtros de status.
-- Consultar animes em uma seção própria abaixo de “Séries Favoritas”, com os mesmos cards e ações. Os filtros de status e seus totais abrangem séries e animes; os animes não aparecem nas duas seções de séries.
-- Consultar “Animes Favoritos” abaixo de “Animes”, independentemente dos filtros de status, e remover favoritos pelo coração do card.
+- **TVmaze API**
 
-Os títulos são classificados pelo gênero `Anime` da TVmaze. A classificação fica salva na lista; títulos antigos são classificados automaticamente ao carregar a coleção. Se a TVmaze estiver indisponível, a lista continua acessível e a classificação pendente é tentada no próximo carregamento.
+---
 
-## Estrutura do projeto
+## 🏗️ Arquitetura
+
+O projeto é dividido entre frontend e backend:
 
 ```text
 seenit/
-├── frontend/             Aplicação Angular
-└── backend/SeenIt.Api/   API .NET
+├── frontend/                 # Aplicação Angular
+├── backend/
+│   └── SeenIt.Api/           # API ASP.NET Core
+└── docs/
+    └── images/               # Imagens utilizadas na documentação
 ```
 
-As requisições para a TVmaze são feitas pelo backend. Dessa forma, o frontend depende apenas da API do SeenIt, e o formato dos dados retornados pela TVmaze é adaptado antes de chegar à aplicação.
+O frontend não acessa diretamente a TVmaze.
 
-## Como executar
+As consultas são realizadas pelo backend do SeenIt, que atua como intermediário entre a aplicação e a API externa.
+
+```text
+┌──────────────┐
+│   Angular    │
+│   Frontend   │
+└──────┬───────┘
+       │
+       │ HTTP / JWT
+       ▼
+┌──────────────┐
+│   SeenIt     │
+│  .NET API    │
+└──────┬───────┘
+       │
+       ├──────────────► PostgreSQL
+       │
+       └──────────────► TVmaze API
+```
+
+Essa abordagem mantém o frontend desacoplado da estrutura da API externa e permite que o backend adapte os dados antes de enviá-los para a interface.
+
+---
+
+## 🔒 Segurança
+
+O SeenIt utiliza autenticação baseada em **JWT** para proteger os recursos relacionados à conta do usuário.
+
+Informações sensíveis e configurações específicas de produção não devem ser armazenadas diretamente no código-fonte.
+
+Em ambientes publicados, configurações como:
+
+- chave de assinatura JWT;
+- connection string do banco de dados;
+- configurações específicas de ambiente;
+
+devem ser fornecidas através de **variáveis de ambiente** ou mecanismos apropriados de gerenciamento de segredos.
+
+---
+
+## 🚀 Executando localmente
+
+### Pré-requisitos
+
+Antes de iniciar, instale:
+
+- [.NET SDK 10](https://dotnet.microsoft.com/)
+- [Node.js](https://nodejs.org/)
+- PostgreSQL
+- Angular CLI compatível com o projeto
+
+---
 
 ### Backend
 
-É necessário ter o .NET SDK 10 instalado.
+Acesse o diretório da API:
 
 ```bash
 cd backend/SeenIt.Api
+```
+
+Restaure as dependências:
+
+```bash
 dotnet restore
+```
+
+Aplique as migrations:
+
+```bash
 dotnet ef database update
+```
+
+Execute a API:
+
+```bash
 dotnet run --urls "https://localhost:7042;http://localhost:5042"
 ```
 
-A chave utilizada para gerar os tokens JWT está configurada para o ambiente de desenvolvimento. Antes de publicar a aplicação, ela deve ser substituída por uma chave segura armazenada em variável de ambiente ou em um gerenciador de segredos.
+---
 
 ### Frontend
 
-É necessário utilizar uma versão do Node.js compatível com o Angular 21.
+Em outro terminal:
 
 ```bash
 cd frontend
+```
+
+Instale as dependências:
+
+```bash
 npm install
+```
+
+Inicie a aplicação:
+
+```bash
 npm start
 ```
 
-Depois, acesse:
+Acesse:
 
 ```text
 http://localhost:4200
 ```
 
-Crie uma conta, faça login e pesquise uma série para adicioná-la à sua lista.
+Depois, crie uma conta, faça login e comece a montar sua lista.
 
-## Endpoints
+---
 
-| Método | Rota | Requer autenticação | Descrição |
+## 🌐 Principais endpoints
+
+### Autenticação
+
+| Método | Endpoint | Autenticação | Descrição |
 |---|---|---:|---|
-| POST | `/api/auth/register` | Não | Cria uma conta |
-| POST | `/api/auth/login` | Não | Realiza o login e retorna o JWT |
-| GET | `/api/series/search?q=` | Não | Pesquisa séries |
-| GET | `/api/series/{id}` | Não | Retorna os detalhes de uma série |
-| GET | `/api/series/{id}/episodes` | Não | Retorna os episódios da série |
-| GET | `/api/my-series` | Sim | Retorna a lista do usuário |
-| POST | `/api/my-series` | Sim | Adiciona ou atualiza uma série na lista |
-| PUT | `/api/my-series/{id}/status` | Sim | Altera o status da série |
-| PUT | `/api/my-series/{id}/favorite` | Sim | Define se a série é favorita com `{ "isFavorite": true/false }` |
-| DELETE | `/api/my-series/{id}` | Sim | Remove a série da lista |
+| `POST` | `/api/auth/register` | Não | Cria uma nova conta |
+| `POST` | `/api/auth/login` | Não | Realiza o login |
+
+### Séries
+
+| Método | Endpoint | Autenticação | Descrição |
+|---|---|---:|---|
+| `GET` | `/api/series/search?q=` | Não | Pesquisa títulos |
+| `GET` | `/api/series/{id}` | Não | Retorna os detalhes de uma série |
+| `GET` | `/api/series/{id}/episodes` | Não | Retorna os episódios |
+
+### Minha Lista
+
+| Método | Endpoint | Autenticação | Descrição |
+|---|---|---:|---|
+| `GET` | `/api/my-series` | Sim | Retorna a coleção do usuário |
+| `POST` | `/api/my-series` | Sim | Adiciona ou atualiza um título |
+| `PUT` | `/api/my-series/{id}/status` | Sim | Altera o status |
+| `PUT` | `/api/my-series/{id}/favorite` | Sim | Adiciona ou remove dos favoritos |
+| `DELETE` | `/api/my-series/{id}` | Sim | Remove um título da coleção |
+
+> A lista acima apresenta os principais endpoints da aplicação e pode evoluir conforme novas funcionalidades forem adicionadas.
+
+---
+
+## 🗺️ Evolução do projeto
+
+O SeenIt continua em desenvolvimento.
+
+Entre os objetivos do projeto estão:
+
+- aprimorar a experiência de acompanhamento de episódios;
+- expandir informações disponíveis nos detalhes das séries;
+- melhorar a experiência visual da aplicação;
+- evoluir segurança e observabilidade;
+- continuar aprimorando a arquitetura para ambiente de produção.
+
+---
+
+## 📚 Fonte dos dados
+
+As informações sobre séries, temporadas, episódios, elenco e demais dados relacionados aos títulos são obtidas através da **TVmaze API**.
+
+[TVmaze](https://www.tvmaze.com/) é um serviço externo e independente do SeenIt.
+
+---
+
+## 👩‍💻 Projeto pessoal
+
+O SeenIt é um projeto pessoal desenvolvido com o objetivo de aplicar e aprofundar conhecimentos em desenvolvimento full stack utilizando **Angular**, **.NET**, **PostgreSQL**, integração com APIs externas, autenticação e publicação de aplicações web.
